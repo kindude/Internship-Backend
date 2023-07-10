@@ -11,7 +11,7 @@ app = FastAPI()
 
 
 @app.get("/")
-def hello():
+def main():
     return {
         "status_code": 200,
         "detail": "ok",
