@@ -1,1 +1,3 @@
 # Internship Backend
+The entry point to launch the project is the main.py file, where uvicorn, fastapi, os, and dotenv dependencies are imported.
+Initially, the load_dotenv() function is executed to load variables from .env. To work with FastAPI, an instance of fastapi is created. There is the __main__ method which contains basic uvicorn settings to run the app. In addition, there is decorator which processes an HTTP GET request to main page which is '/' (home directory).  
