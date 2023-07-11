@@ -1,3 +1,6 @@
 # Internship Backend
-The entry point to launch the project is the main.py file, where uvicorn, fastapi, os, and dotenv dependencies are imported.
-Initially, the load_dotenv() function is executed to load variables from .env. To work with FastAPI, an instance of fastapi is created. There is the __main__ method which contains basic uvicorn settings to run the app. In addition, there is decorator which processes an HTTP GET request to main page which is '/' (home directory).  
+To launch the project the docker is used. 
+Firstly docker image is created using docker file configuration then to run the app the command docker run -p 8000:8000 my-fast-api is utilised, where
+8000:8000 is local and external ports 
+my-fast-api is a name of a docker image
+
