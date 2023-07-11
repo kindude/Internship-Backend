@@ -1,11 +1,10 @@
-import os
+
 import uvicorn
 from fastapi import FastAPI
-from dotenv import load_dotenv
+from ENV import host, port
 
 
-# loading variables from .env
-load_dotenv()
+
 
 app = FastAPI()
 
@@ -20,6 +19,4 @@ def main():
 
 
 if __name__ == '__main__':
-    host = os.getenv("HOST")
-    port = os.getenv("PORT")
     uvicorn.run(app, host, port)
