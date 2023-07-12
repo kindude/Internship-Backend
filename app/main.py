@@ -1,8 +1,8 @@
 import uvicorn
+import db
 from fastapi import FastAPI
 from ENV import host, port
 from fastapi.middleware.cors import CORSMiddleware
-
 
 app = FastAPI()
 
@@ -14,6 +14,10 @@ app.add_middleware(
     allow_credentials=True,
     expose_headers=["Content-Disposition"]
 )
+
+
+
+
 
 
 @app.get("/")
