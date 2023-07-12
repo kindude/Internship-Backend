@@ -1,4 +1,3 @@
-
 import uvicorn
 from fastapi import FastAPI
 from ENV import host, port
@@ -16,6 +15,7 @@ app.add_middleware(
     expose_headers=["Content-Disposition"]
 )
 
+
 @app.get("/")
 def main():
     return {
@@ -26,4 +26,5 @@ def main():
 
 
 if __name__ == '__main__':
-    uvicorn.run(app, host, port)
+
+    uvicorn.run(app, host=host, port=port)
