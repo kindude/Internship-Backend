@@ -1,12 +1,19 @@
-
 import uvicorn
 from fastapi import FastAPI
 from ENV import host, port
-
-
+from fastapi.middleware.cors import CORSMiddleware
 
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+    allow_credentials=True,
+    expose_headers=["Content-Disposition"]
+)
 
 
 @app.get("/")
@@ -19,4 +26,5 @@ def main():
 
 
 if __name__ == '__main__':
-    uvicorn.run(app, host, port)
+
+    uvicorn.run(app, host=host, port=port)
