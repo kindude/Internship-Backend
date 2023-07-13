@@ -1,8 +1,8 @@
 import uvicorn
+import db
 from fastapi import FastAPI
 from ENV import host, port
 from fastapi.middleware.cors import CORSMiddleware
-
 
 app = FastAPI()
 
@@ -16,6 +16,10 @@ app.add_middleware(
 )
 
 
+
+
+
+
 @app.get("/")
 def main():
     return {
@@ -27,4 +31,4 @@ def main():
 
 if __name__ == '__main__':
 
-    uvicorn.run(app, host=host, port=port)
+    uvicorn.run("main:app", host=host, port=port, reload=True)
