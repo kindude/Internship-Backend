@@ -1,5 +1,4 @@
 app/.env
-.idea
+!.idea
 !/app/.env
-/.idea/
 /.idea/
