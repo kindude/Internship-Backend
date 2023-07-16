@@ -1,6 +1,8 @@
 from sqlalchemy import Column, Integer, String, Boolean, ARRAY
 from sqlalchemy.ext.declarative import declarative_base
 
+from app.main import app
+import app.db
 
 Base = declarative_base()
 
@@ -19,3 +21,6 @@ class User(Base):
 
     def __repr__(self):
         return f"<User(id={self.id}, username={self.username}, email={self.email})>"
+
+
+
