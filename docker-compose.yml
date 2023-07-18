@@ -27,14 +27,21 @@ services:
 
   app:
     build:
-      context: ./app
-      dockerfile: dockerfile
+      context: .
+      dockerfile: app/dockerfile
     env_file:
       - .env
     ports:
       - ${APP_PORTS}:${APP_PORTS}
+    depends_on:
+      - postgres
+      - redis
     volumes:
       - ./app:/app
+
+networks:
+  my-network:
+    external: true
 
 volumes:
   postgres_data:

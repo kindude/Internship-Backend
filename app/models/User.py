@@ -1,8 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean, ARRAY
 from sqlalchemy.ext.declarative import declarative_base
 
-from app.main import app
-import app.db
 
 Base = declarative_base()
 
@@ -18,6 +16,19 @@ class User(Base):
     phone = Column(String(13), nullable=False)
     status = Column(Boolean, nullable=False)
     roles = Column(ARRAY(String))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+            'password': self.password,
+            'city': self.city,
+            'country': self.country,
+            'phone': self.phone,
+            'status': self.status,
+            'roles': self.roles,
+        }
 
     def __repr__(self):
         return f"<User(id={self.id}, username={self.username}, email={self.email})>"
