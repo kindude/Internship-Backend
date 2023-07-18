@@ -3,3 +3,4 @@ app/.env
 !/app/.env
 /.idea/
 .idea/
+__pycache__/
