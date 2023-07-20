@@ -48,10 +48,10 @@ async def update_user(id:int, request: UserScheme, db: AsyncSession = Depends(ge
     return updated_user
 
 
-@router.delete("/{id}", response_model=None)
-async def delete_user(id: int, db: AsyncSession = Depends(get_db)) -> UserResponse:
+@router.delete("/{id}", response_model=dict)
+async def delete_user(id: int, db: AsyncSession = Depends(get_db)) -> dict:
     user_repository = UserRepository(database=db)
-    res = await user_repository.del_user(id)
+    res = await user_repository.del_user(id=id)
     if res:
         return {"message": f"{res}"}
     else:
@@ -67,5 +67,5 @@ async def get_all(page: int = 1, per_page: int = 10, db: AsyncSession = Depends(
 @router.get("/{id}", response_model=UserResponse)
 async def get_user(id: int, db: AsyncSession = Depends(get_db)) -> UserResponse:
     user_repository = UserRepository(database=db)
-    query = await user_repository.get_user(id)
+    query = await user_repository.get_user(id=id)
     return query
