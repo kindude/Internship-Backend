@@ -6,16 +6,17 @@ from pydantic import BaseModel
 from typing import List, Union
 from pydantic import BaseModel, EmailStr
 
-class User(BaseModel):
-    id: int
-    email: EmailStr
+
+class UserScheme(BaseModel):
     username: str
+    email: EmailStr
     password: str
     city: str
     country: str
     phone: str
     status: bool
     roles: List[str]
+
 
 class UserResponse(BaseModel):
     id: int
@@ -50,4 +51,4 @@ class UsersListResponse(BaseModel):
 
 
 class UserDetailsResponse(BaseModel):
-    user: User
+    user: UserScheme

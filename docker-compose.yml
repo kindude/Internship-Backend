@@ -28,7 +28,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: app/dockerfile
+      dockerfile: dockerfile
     env_file:
       - .env
     ports:

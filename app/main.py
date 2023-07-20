@@ -1,5 +1,4 @@
 import uvicorn
-import db
 from fastapi import FastAPI
 from ENV import host, port
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,7 +19,9 @@ app.add_middleware(
 app.include_router(router)
 
 
-@app.get("/")
+@app.api_route('/{id}', methods=['GET', 'DELETE'])
+
+@app.api_route('/', methods=['GET', 'HEAD', 'DELETE'])
 def main():
     return {
         "status_code": 200,

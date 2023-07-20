@@ -18,13 +18,8 @@ async def connect_Postgre():
 
 async def main():
     async_session = await connect_Postgre()
-    # Use the async_session for further operations or store it for later use
 
-    # Redis connection
     r = redis.Redis(host="127.0.0.1", port=6379)
-
-    # Your other code here
-
 
 # Run the main function using asyncio.run()
 asyncio.run(main())
