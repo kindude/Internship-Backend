@@ -1,9 +1,9 @@
 import hashlib
-import os
+import ENV
 
 
 def hash(password):
-    salt = os.getenv("SALT")
-    database_password = password + salt
+    salt = str(ENV.salt)
+    database_password = str(password) + salt
     hashed = hashlib.md5(database_password.encode()).hexdigest()
     return hashed

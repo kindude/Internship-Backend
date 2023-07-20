@@ -14,31 +14,25 @@ from schemas.pasword_hashing import hash
 logger = logging.getLogger(__name__)
 load_dotenv()
 class UserRepository:
-    def __init__(self, async_session: async_sessionmaker[AsyncSession]):
-        self.async_session = async_session
+    def __init__(self, database: async_sessionmaker[AsyncSession]):
+        self.async_session = database
 
-    async def create_user(self, username, email, password, city, country, phone, status, roles) -> User:
+    async def create_user(self, request: UserScheme) -> User:
         try:
-            hashed = hash(password)
-            user = User(username=username, email=email, password=hashed, city=city, country=country, phone=phone,
-                             status=status, roles=roles)
+            hashed = hash(request.password)
+            user = User(username=request.username, email=request.email, password=hashed, city=request.city,
+                        country=request.country, phone=request.phone,
+                        status=request.status, roles=request.roles)
             async with self.async_session as session:
                 session.add(user)
                 await session.commit()
-                logger.info(f"New user created: {username}")
-
-            # async with self.async_session as session:
-            #     # Sort users by id in descending order and fetch the first row
-            #     result = session.query(User).order_by(User.id.desc()).first()
-            #     latest_user = result.scalar_one_or_none()
-            return user
-
+                logger.info(f"New user created: {request.username}")
+                return user
 
         except Exception as e:
             # Handle the specific exception here
-            print(f"An error occurred while retrieving the latest user: {e}")
-
-
+            print(f"An error occurred while creating the user: {e}")
+            raise e
 
     async def get_user(self, id: int) -> UserResponse:
         async with self.async_session as session:
@@ -61,25 +55,28 @@ class UserRepository:
             )
 
     async def get_users(self, page: int = 1, per_page: int = 10) -> UsersListResponse:
-        query = select(User)
+        # Calculate the offset based on the page and per_page values
+        offset = (page - 1) * per_page
+
+        query = select(User).slice(offset, offset + per_page)
         users = await self.async_session.execute(query)
         user_list = [self.user_to_dict(user) for user in users.scalars().all()]
         return UsersListResponse(users=user_list)
 
-    def user_to_dict(self, user) -> dict:
-        return {
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
-            'password': user.password,
-            'city': user.city,
-            'country': user.country,
-            'phone': user.phone,
-            'status': user.status,
-            'roles': ','.join(user.roles)
-        }
+    def user_to_dict(self, user) -> UserScheme:
+        return UserScheme(
+            id=user.id,
+            username=user.username,
+            email=user.email,
+            city=user.city,
+            password=user.password,
+            country=user.country,
+            phone=user.phone,
+            status=user.status,
+            roles=user.roles
+        )
 
-    async def del_user(self, user_id: int):
+    async def del_user(self, user_id: int) -> bool:
         try:
             user = await self.get_user(user_id)
             if user:

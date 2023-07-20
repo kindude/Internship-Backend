@@ -47,7 +47,7 @@ class UserUpdateRequest(BaseModel):
 
 
 class UsersListResponse(BaseModel):
-    users: List[Dict[str, Union[int, str]]]
+    users: List[UserScheme]
 
 
 class UserDetailsResponse(BaseModel):
