@@ -52,3 +52,7 @@ class UsersListResponse(BaseModel):
 
 class UserDetailsResponse(BaseModel):
     user: UserScheme
+
+class UserDeleteScheme(BaseModel):
+    message: str
+    id: int

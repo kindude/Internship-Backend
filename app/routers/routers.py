@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from repositories.user_repository import UserRepository
-from schemas.User import UserScheme, UserResponse, UsersListResponse
+from schemas.User import UserScheme, UserResponse, UsersListResponse, UserDeleteScheme
 from db.get_db import get_db
 
 
@@ -34,28 +34,15 @@ async def create_user(request: UserScheme, db: AsyncSession = Depends(get_db)) -
 @router.post("/updateUser/{id}", response_model=UserResponse)
 async def update_user(id:int, request: UserScheme, db: AsyncSession = Depends(get_db)) -> UserResponse:
     user_repository = UserRepository(database=db)
-    updated_user = await user_repository.update_user(
-        id,
-        request.username,
-        request.email,
-        request.password,
-        request.city,
-        request.country,
-        request.phone,
-        request.status,
-        request.roles,
-    )
+    updated_user = await user_repository.update_user(id=id, request=request)
     return updated_user
 
 
-@router.delete("/{id}", response_model=dict)
-async def delete_user(id: int, db: AsyncSession = Depends(get_db)) -> dict:
+@router.delete("/{id}", response_model=UserDeleteScheme)
+async def delete_user(id: int, db: AsyncSession = Depends(get_db)) -> UserDeleteScheme:
     user_repository = UserRepository(database=db)
     res = await user_repository.del_user(id=id)
-    if res:
-        return {"message": f"{res}"}
-    else:
-        return {"message": f"No changes to the db"}
+    return res
 
 @router.get("/all")
 async def get_all(page: int = 1, per_page: int = 10, db: AsyncSession = Depends(get_db)) -> UsersListResponse:

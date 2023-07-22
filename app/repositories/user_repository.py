@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, select
 from models.User import User
-from schemas.User import UserResponse, UsersListResponse, UserScheme
+from schemas.User import UserResponse, UsersListResponse, UserScheme, UserDeleteScheme
 from schemas.pasword_hashing import hash
 
 # Создание объекта логгера
@@ -19,10 +19,10 @@ class UserRepository:
 
     async def create_user(self, request: UserScheme) -> User:
         try:
-            hashed = hash(request.password)
-            user = User(username=request.username, email=request.email, password=hashed, city=request.city,
-                        country=request.country, phone=request.phone,
-                        status=request.status, roles=request.roles)
+            hashed = hash(password=request.password)
+            request.password = hashed
+            user_dict = request.dict()  # Convert UserScheme instance to a dictionary
+            user = User(**user_dict)
             async with self.async_session as session:
                 session.add(user)
                 await session.commit()
@@ -63,7 +63,7 @@ class UserRepository:
         user_list = [self.user_to_dict(user) for user in users.scalars().all()]
         return UsersListResponse(users=user_list)
 
-    def user_to_dict(self, user) -> UserScheme:
+    def user_to_dict(self, user: User) -> UserScheme:
         return UserScheme(
             id=user.id,
             username=user.username,
@@ -76,39 +76,47 @@ class UserRepository:
             roles=user.roles
         )
 
-    async def del_user(self, user_id: int) -> bool:
+    async def del_user(self, id: int) -> UserDeleteScheme:
         try:
-            user = await self.get_user(user_id)
+            user = await self.get_user(id=id)
             if user:
                 async with self.async_session as session:
-                    query = delete(User).where(User.id == user_id)
+                    query = delete(User).where(User.id == id)
                     result = await session.execute(query)
                     await session.commit()
                     if result:
-                        logger.info(f"Пользователь удален: ID {user_id}")
-                        return True
+                        logger.info(f"Пользователь удален: ID {id}")
+                        return UserDeleteScheme(
+                            message="User was successfully deleted",
+                            id=id
+                        )
                     else:
-                        return False
+                        return UserDeleteScheme(
+                            message="User wasn't deleted",
+                            id=-1
+                        )
             else:
-                return False
+                return UserDeleteScheme(
+                    message="User wasn't deleted",
+                    id=-1
+                )
 
         except Exception as e:
             print(f"An error occurred while deleting user: {e}")
 
-    async def update_user(self, id: int, username: str, email: str, password: str, city: str, country: str,
-                          phone: str, status: bool, roles: list) -> UserResponse:
+    async def update_user(self, id: int, request: UserScheme) -> UserResponse:
         try:
             async with self.async_session as session:
                 user = await session.get(User, id)
                 if user is not None:
-                    user.username = username
-                    user.email = email
-                    user.password = hash(password)
-                    user.city = city
-                    user.country = country
-                    user.phone = phone
-                    user.status = status
-                    user.roles = roles
+                    user.username = request.username
+                    user.email = request.email
+                    user.password = hash(password=request.password)
+                    user.city = request.city
+                    user.country = request.country
+                    user.phone = request.phone
+                    user.status = request.status
+                    user.roles = request.roles
                     await session.commit()
                     logger.info(f"User updated: ID {id}")
                     updated_roles = list(user.roles)
