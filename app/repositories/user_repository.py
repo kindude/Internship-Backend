@@ -1,25 +1,43 @@
 from __future__ import annotations
 
 import logging
+
 from dotenv import load_dotenv
 from sqlalchemy import select, delete, desc
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, select
 from models.User import User
-from schemas.User import UserResponse, UsersListResponse, UserScheme, UserDeleteScheme
-from schemas.pasword_hashing import hash
+from schemas.User import UserResponse, UsersListResponse, UserScheme, UserDeleteScheme, UserLogin
+from schemas.pasword_hashing import hash, hash_with_salt
+from utils.auth import create_token
 
-# Создание объекта логгера
 logger = logging.getLogger(__name__)
 load_dotenv()
+
+
 class UserRepository:
+
     def __init__(self, database: async_sessionmaker[AsyncSession]):
         self.async_session = database
 
+    async def authenticate_user(self, request: UserLogin) -> str:
+        try:
+            user = await self.get_user_by_username(email=request.email)
+            hashed = hash(password=request.password)
+            hashed_request_password = hash_with_salt(request.password)
+            if hashed_request_password == user.password:
+                token = create_token(user)
+                return token
+            else:
+                return False
+        except Exception as e:
+            print(f"An error occurred while creating the user: {e}")
+            raise e
+
     async def create_user(self, request: UserScheme) -> User:
         try:
-            hashed = hash(password=request.password)
+            hashed = hash_with_salt(password=request.password)
             request.password = hashed
             user_dict = request.dict()  # Convert UserScheme instance to a dictionary
             user = User(**user_dict)
@@ -30,7 +48,6 @@ class UserRepository:
                 return user
 
         except Exception as e:
-            # Handle the specific exception here
             print(f"An error occurred while creating the user: {e}")
             raise e
 
@@ -55,9 +72,7 @@ class UserRepository:
             )
 
     async def get_users(self, page: int = 1, per_page: int = 10) -> UsersListResponse:
-        # Calculate the offset based on the page and per_page values
         offset = (page - 1) * per_page
-
         query = select(User).slice(offset, offset + per_page)
         users = await self.async_session.execute(query)
         user_list = [self.user_to_dict(user) for user in users.scalars().all()]
@@ -135,3 +150,26 @@ class UserRepository:
         except Exception as e:
             print(f"An error occurred while updating user: {e}")
 
+    async def get_user_by_username(self, email: str) -> UserResponse:
+        try:
+            async with self.async_session as session:
+                query = select(User).filter(User.email == email)
+                result = await session.execute(query)
+                user = result.scalar_one_or_none()
+                if user is None:
+                    return None
+                else:
+                    return UserResponse(
+                        id=user.id,
+                        username=user.username,
+                        email=user.email,
+                        password=user.password,
+                        city=user.password,
+                        country=user.country,
+                        phone=user.phone,
+                        status=user.status,
+                        roles=user.roles
+                    )
+        except Exception as e:
+            print(f"An error occurred while creating the user: {e}")
+            raise e

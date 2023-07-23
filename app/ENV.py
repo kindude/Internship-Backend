@@ -1,4 +1,6 @@
 import os
+import secrets
+
 from dotenv import load_dotenv
 # loading variables from .env
 load_dotenv()
@@ -13,3 +15,5 @@ postgres_db = os.getenv("POSTGRES_DB")
 docker_db_name = os.getenv("DB_POSTGRES_DB_NAME")
 
 DB_URL_CONNECT = "postgresql+asyncpg://" + user + ":" + password + "@" + docker_db_name + ":" + postgres_ports + "/" + postgres_db
+SECRET_KEY = "helloworld"
+auth0_token = os.getenv("TOKEN")
