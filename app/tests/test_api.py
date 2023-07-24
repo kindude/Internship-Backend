@@ -1,18 +1,6 @@
 from fastapi.testclient import TestClient
 from app.main import app
 
-# import socket
-# socket.getaddrinfo('http://localhost', 8000)
-
-import sys
-import os
-
-# Get the absolute path of the 'app' folder
-app_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-
-# Add the 'app' folder to sys.path
-sys.path.insert(0, app_path)
-
 client = TestClient(app)
 
 def test_create_user():
