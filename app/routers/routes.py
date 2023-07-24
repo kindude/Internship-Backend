@@ -1,16 +1,11 @@
-import os
-from http.client import HTTPException
 
 from fastapi import APIRouter, Depends
-from fastapi.security import OAuth2PasswordBearer
-from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from repositories.user_repository import UserRepository
 from schemas.User import UserScheme, UserResponse, UsersListResponse, UserDeleteScheme, UserLogin, Token
 from db.get_db import get_db
 from utils.auth import get_user_by_token
-
+from utils.auth import get_current_user
 router = APIRouter()
 
 
@@ -62,9 +57,8 @@ async def get_user(id: int, db: AsyncSession = Depends(get_db)) -> UserResponse:
 
 
 @router.post("/me", response_model=UserScheme)
-async def get_current_user(request: Token) -> UserScheme:
-
-    user = await get_user_by_token(request=request)
+async def get_user(request: Token) -> UserScheme:
+    user = get_user_by_token(request=request)
     return user
 
 
@@ -81,27 +75,10 @@ async def user_login(request: UserLogin, db: AsyncSession = Depends(get_db))->st
     res = await user_repository.authenticate_user(request=request)
     return res
 
-# @router.get("/secure")
-# async def secure_route(token: str = Depends(get_user_by_token)):
-#     return {"message": "Доступ разрешен", "user":"1"}
-
-
-AUTH0_DOMAIN = "dev-nusd43iygpsjwqlj.us.auth0.com"
-API_AUDIENCE = "https://auth-reg"
-ALGORITHM = "HS256"
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
-
-def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
-
-    payload = jwt.decode(token, os.getenv("AUTH0_SECRET_KEY"), algorithms=[ALGORITHM], audience=API_AUDIENCE)
-    print("Payload:", payload)  # Add this line to print the payload
-    return payload
-
-
-
-@router.post("/api/secure")
-async def secure_route(current_user: dict = Depends(get_current_user)):
+@router.post("/api/secure", response_model=dict)
+async def secure_route(current_user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)) -> dict:
+    user_repository = UserRepository(database=db)
+    # await user_repository.create_blank_user(current_user["email"])
     return {"message": "Доступ разрешен", "user": current_user}
 
 

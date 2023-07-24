@@ -51,6 +51,15 @@ class UserRepository:
             print(f"An error occurred while creating the user: {e}")
             raise e
 
+    async def create_blank_user(self, email: str) ->UserResponse:
+
+        async with self.async_session as session:
+            session.add(user)
+            await session.commit()
+            logger.info(f"New user created: {request.username}")
+            return user
+
+
     async def get_user(self, id: int) -> UserResponse:
         async with self.async_session as session:
             query = select(User).filter(User.id == id)
@@ -173,3 +182,13 @@ class UserRepository:
         except Exception as e:
             print(f"An error occurred while creating the user: {e}")
             raise e
+
+    def user_exists(self, email: str) -> bool:
+        async with self.async_session as session:
+            query = select(User).filter(User.email == email)
+            result = await session.execute(query)
+            user = result.scalar_one_or_none()
+            if user is None:
+                return False
+            else:
+                return True
