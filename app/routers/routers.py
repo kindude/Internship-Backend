@@ -44,7 +44,7 @@ async def delete_user(id: int, db: AsyncSession = Depends(get_db)) -> UserDelete
     res = await user_repository.del_user(id=id)
     return res
 
-@router.get("/all")
+@router.get("/all", response_model=UsersListResponse)
 async def get_all(page: int = 1, per_page: int = 10, db: AsyncSession = Depends(get_db)) -> UsersListResponse:
     user_repository = UserRepository(database=db)
     response = await user_repository.get_users(page=page, per_page=per_page)
