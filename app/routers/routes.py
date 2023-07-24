@@ -1,6 +1,9 @@
+from http.client import HTTPException
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from models.User import User
 from repositories.user_repository import UserRepository
 from schemas.User import UserScheme, UserResponse, UsersListResponse, UserDeleteScheme, UserLogin, Token
 from db.get_db import get_db
@@ -82,3 +85,36 @@ async def secure_route(current_user: dict = Depends(get_current_user), db: Async
     return {"message": "Доступ разрешен", "user": current_user}
 
 
+@router.put("/users/me", response_model=UserScheme)
+async def update_user_profile(user_data: UserScheme, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    # Check if the current user is editing their own profile
+    if current_user.username != user_data.username:
+        raise HTTPException(status_code=403, detail="You can only edit your own profile")
+
+    if current_user.email != user_data.email:
+        raise HTTPException(status_code=403, detail="You cannot change your email")
+
+
+    user_repository = UserRepository(database=db)
+    updated_user = await user_repository.update_user_profile(current_user.id, user_data)
+
+    return updated_user
+
+@router.put("/users/me/password", response_model=UserScheme)
+async def update_user_password(new_password: str, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+
+    if new_password == current_user.password:
+        raise HTTPException(status_code=400, detail="New password cannot be the same as the old password")
+    user_repository = UserRepository(database=db)
+
+    updated_user = await user_repository.update_user_password(current_user.id, new_password)
+
+    return updated_user
+
+
+@router.delete("/users/me", response_model=dict)
+async def delete_user_profile(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    user_repository = UserRepository(database=db)
+    deleted_user = await user_repository.delete_user(current_user.id)
+
+    return {"message": "User profile deleted successfully"}
