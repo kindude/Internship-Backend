@@ -21,14 +21,13 @@ class UserRepository:
         try:
             hashed = hash(password=request.password)
             request.password = hashed
-            user_dict = request.dict()  # Convert UserScheme instance to a dictionary
+            user_dict = request.dict()
             user = User(**user_dict)
             async with self.async_session as session:
                 session.add(user)
                 await session.commit()
                 logger.info(f"New user created: {request.username}")
                 return user
-
         except Exception as e:
             # Handle the specific exception here
             print(f"An error occurred while creating the user: {e}")
@@ -41,29 +40,16 @@ class UserRepository:
             user = result.scalar_one_or_none()
             if user is None:
                 return None
-
-            return UserResponse(
-                id=user.id,
-                username=user.username,
-                email=user.email,
-                password=user.password,
-                city=user.city,
-                country=user.country,
-                phone=user.phone,
-                status=user.status,
-                roles=user.roles,
-            )
+            return user
 
     async def get_users(self, page: int = 1, per_page: int = 10) -> UsersListResponse:
-        # Calculate the offset based on the page and per_page values
         offset = (page - 1) * per_page
-
         query = select(User).slice(offset, offset + per_page)
         users = await self.async_session.execute(query)
-        user_list = [self.user_to_dict(user) for user in users.scalars().all()]
+        user_list = [self.user_to_scheme(user) for user in users.scalars().all()]
         return UsersListResponse(users=user_list)
 
-    def user_to_dict(self, user: User) -> UserScheme:
+    def user_to_scheme(self, user: User) -> UserScheme:
         return UserScheme(
             id=user.id,
             username=user.username,
@@ -119,19 +105,7 @@ class UserRepository:
                     user.roles = request.roles
                     await session.commit()
                     logger.info(f"User updated: ID {id}")
-                    updated_roles = list(user.roles)
-
-                    return UserResponse(
-                        id=user.id,
-                        username=user.username,
-                        email=user.email,
-                        password=user.password,
-                        city=user.city,
-                        country=user.country,
-                        phone=user.phone,
-                        status=user.status,
-                        roles=updated_roles
-                    )
+                    return user
         except Exception as e:
             print(f"An error occurred while updating user: {e}")
 

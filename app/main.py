@@ -19,9 +19,9 @@ app.add_middleware(
 app.include_router(router)
 
 
-@app.api_route('/{id}', methods=['GET', 'DELETE'])
 
-@app.api_route('/', methods=['GET', 'HEAD', 'DELETE'])
+@app.api_route('/', methods=['GET', 'DELETE'])
+
 def main():
     return {
         "status_code": 200,
