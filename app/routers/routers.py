@@ -12,7 +12,7 @@ router = APIRouter()
 
 
 
-@router.post("/create", response_model=UserResponse)
+@router.post("/users/create", response_model=UserResponse)
 async def create_user(request: UserScheme, db: AsyncSession = Depends(get_db)) -> UserResponse:
     user_repository = UserRepository(database=db)
     user = await user_repository.create_user(request=request)
@@ -31,27 +31,28 @@ async def create_user(request: UserScheme, db: AsyncSession = Depends(get_db)) -
 
 
 
-@router.post("/updateUser/{id}", response_model=UserResponse)
+@router.post("/users/update/{id}", response_model=UserResponse)
 async def update_user(id:int, request: UserScheme, db: AsyncSession = Depends(get_db)) -> UserResponse:
     user_repository = UserRepository(database=db)
     updated_user = await user_repository.update_user(id=id, request=request)
     return updated_user
 
 
-@router.delete("/{id}", response_model=UserDeleteScheme)
+@router.delete("/users/{id}", response_model=UserDeleteScheme)
 async def delete_user(id: int, db: AsyncSession = Depends(get_db)) -> UserDeleteScheme:
     user_repository = UserRepository(database=db)
     res = await user_repository.del_user(id=id)
     return res
 
-@router.get("/all")
+
+@router.get("/users/all", response_model=UsersListResponse)
 async def get_all(page: int = 1, per_page: int = 10, db: AsyncSession = Depends(get_db)) -> UsersListResponse:
     user_repository = UserRepository(database=db)
     response = await user_repository.get_users(page=page, per_page=per_page)
     return response
 
 
-@router.get("/{id}", response_model=UserResponse)
+@router.get("/users/{id}", response_model=UserResponse)
 async def get_user(id: int, db: AsyncSession = Depends(get_db)) -> UserResponse:
     user_repository = UserRepository(database=db)
     query = await user_repository.get_user(id=id)
