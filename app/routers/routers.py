@@ -17,18 +17,7 @@ async def create_user(request: UserScheme, db: AsyncSession = Depends(get_db)) -
     user_repository = UserRepository(database=db)
     user = await user_repository.create_user(request=request)
 
-    return UserResponse(
-        id=user.id,
-        username=user.username,
-        email=user.email,
-        password=user.password,
-        city=user.city,
-        country=user.country,
-        phone=user.phone,
-        status=user.status,
-        roles=user.roles,
-    )
-
+    return user
 
 
 @router.post("/users/update/{id}", response_model=UserResponse)
@@ -43,6 +32,7 @@ async def delete_user(id: int, db: AsyncSession = Depends(get_db)) -> UserDelete
     user_repository = UserRepository(database=db)
     res = await user_repository.del_user(id=id)
     return res
+
 
 @router.get("/users/all", response_model=UsersListResponse)
 async def get_all(page: int = 1, per_page: int = 10, db: AsyncSession = Depends(get_db)) -> UsersListResponse:
