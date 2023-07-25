@@ -1,15 +1,11 @@
-import httpx
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from models.User import User
 from repositories.user_repository import UserRepository
 from schemas.User import UserScheme, UserResponse, UsersListResponse, UserDeleteScheme, UserLogin, Token
 from db.get_db import get_db
 from utils.auth import get_user_email_by_token
 from utils.auth import get_current_user
 router = APIRouter()
-
 
 
 @router.post("/users/create", response_model=UserResponse)
