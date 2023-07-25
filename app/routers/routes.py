@@ -1,4 +1,4 @@
-import httpx
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,17 +17,7 @@ async def create_user(request: UserScheme, db: AsyncSession = Depends(get_db)) -
     user_repository = UserRepository(database=db)
     user = await user_repository.create_user(request=request)
 
-    return UserResponse(
-        id=user.id,
-        username=user.username,
-        email=user.email,
-        password=user.password,
-        city=user.city,
-        country=user.country,
-        phone=user.phone,
-        status=user.status,
-        roles=user.roles,
-    )
+    return user
 
 
 @router.post("/users/update/{id}", response_model=UserResponse)
@@ -108,3 +98,6 @@ async def create_user_from_auth0(access_token: str, db: AsyncSession = Depends(g
             status=user.status,
             roles=user.roles,
         )
+
+
+
