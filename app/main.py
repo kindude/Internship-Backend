@@ -20,6 +20,7 @@ app.include_router(router)
 
 @app.api_route('/', methods=['GET', 'DELETE'])
 
+
 def main():
     return {
         "status_code": 200,
