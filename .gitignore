@@ -2,4 +2,11 @@ app/.env
 !.idea
 !/app/.env
 /.idea/
+
+.idea/
+__pycache__/
+.pytest_cache
+app/.pytest_cache
+
 .env
+

@@ -17,5 +17,21 @@ class User(Base):
     status = Column(Boolean, nullable=False)
     roles = Column(ARRAY(String))
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+            'password': self.password,
+            'city': self.city,
+            'country': self.country,
+            'phone': self.phone,
+            'status': self.status,
+            'roles': self.roles,
+        }
+
     def __repr__(self):
         return f"<User(id={self.id}, username={self.username}, email={self.email})>"
+
+
+
