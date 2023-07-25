@@ -13,6 +13,7 @@ from schemas.User import UserResponse, UsersListResponse, UserScheme, UserDelete
 from schemas.pasword_hashing import hash, hash_with_salt
 from utils.auth import create_token
 
+# Создание объекта логгера
 logger = logging.getLogger(__name__)
 load_dotenv()
 
@@ -21,20 +22,6 @@ class UserRepository:
 
     def __init__(self, database: async_sessionmaker[AsyncSession]):
         self.async_session = database
-
-    async def authenticate_user(self, request: UserLogin) -> Token:
-        try:
-            user = await self.get_user_by_username(email=request.email)
-            hashed = hash(password=request.password)
-            hashed_request_password = hash_with_salt(request.password)
-            if hashed_request_password == user.password:
-                token = create_token(user)
-                return token
-            else:
-                return False
-        except Exception as e:
-            print(f"An error occurred while creating the user: {e}")
-            raise e
 
     async def create_user(self, request: UserScheme) -> User:
         try:
@@ -147,6 +134,7 @@ class UserRepository:
                         status=user.status,
                         roles=user.roles
                     )
+                    return user
         except Exception as e:
             print(f"An error occurred while creating the user: {e}")
             raise e

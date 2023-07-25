@@ -17,17 +17,7 @@ async def create_user(request: UserScheme, db: AsyncSession = Depends(get_db)) -
     user_repository = UserRepository(database=db)
     user = await user_repository.create_user(request=request)
 
-    return UserResponse(
-        id=user.id,
-        username=user.username,
-        email=user.email,
-        password=user.password,
-        city=user.city,
-        country=user.country,
-        phone=user.phone,
-        status=user.status,
-        roles=user.roles,
-    )
+    return user
 
 
 
