@@ -1,9 +1,5 @@
 import os
 from dotenv import load_dotenv
-
-import sys
-
-sys.path = ['', '..'] + sys.path[1:]
 from alembic import *
 from logging.config import fileConfig
 from alembic.util import CommandError
@@ -13,7 +9,7 @@ from app.models.User import Base
 # Load environment variables from .env file
 load_dotenv()
 
-
+sys.path = ['', '..'] + sys.path[1:]
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
@@ -34,10 +30,6 @@ target_metadata = Base.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
-
-
-import sys
-import os
 
 # Get the absolute path of the 'app' folder
 app_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "app"))

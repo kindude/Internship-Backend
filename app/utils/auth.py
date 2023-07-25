@@ -4,17 +4,19 @@ from http.client import HTTPException
 
 import jwt
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
-
-from ENV import SECRET_KEY, auth0_token
 
 
-from schemas.User import UserResponse, UserScheme, Token, UserLogin
+from ENV import SECRET_KEY, CLIENT_SECRET, ALGORITHM, API_AUDIENCE
 
-from fastapi import Depends, HTTPException, status
+
+from schemas.User import UserResponse, UserScheme, Token
+
+from fastapi import Depends, HTTPException
 from jose import jwt, JWTError
-def create_token(user:UserResponse):
-    expiration = datetime.datetime.utcnow() + datetime.timedelta(minutes=15)
+
+
+def create_token(user: UserResponse):
+    expiration = datetime.datetime.utcnow() + datetime.timedelta(hours=24)
 
     payload = {
         "username": user.username,
@@ -33,11 +35,8 @@ def create_token(user:UserResponse):
     return token
 
 
-
-
-def get_user_by_token(request:Token):
+def get_user_by_token(request: Token):
     try:
-        algorithm = os.getenv("ALGORITHM")
         payload = jwt.decode(request.token, SECRET_KEY, algorithms=["HS256"])
 
         username: str = payload.get("username")
@@ -59,12 +58,27 @@ def get_user_by_token(request:Token):
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
+def get_user_email_by_token(request: Token) -> str:
+    try:
+        payload = jwt.decode(request.token, SECRET_KEY, algorithms=["HS256"])
+        username: str = payload.get("username")
+        email: str = payload.get("email")
+        if not username:
+            return None
+        return email
+
+    except JWTError:
+        try:
+            email = get_current_user(request.token)
+            return email
+        except:
+            raise HTTPException(status_code=401, detail="Invalid token")
+
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 
-def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
-    ALGORITHM = os.getenv("ALGORITHM")
-    CLIENT_SECRET = os.getenv("AUTH0_SECRET_KEY")
-    API_AUDIENCE= os.getenv("API_AUDIENCE")
-    payload = jwt.decode(token,CLIENT_SECRET, algorithms=ALGORITHM, audience=API_AUDIENCE, options={"verify_signature": False})
+
+def get_current_user(token: str = Depends(oauth2_scheme)) -> str:
+    payload = jwt.decode(token, CLIENT_SECRET, algorithms=ALGORITHM, audience=API_AUDIENCE, options={"verify_signature": False})
     email = payload.get('email')
-    return {"email": email, "user": payload}
+    return email

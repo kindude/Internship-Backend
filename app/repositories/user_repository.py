@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 import logging
 
 from dotenv import load_dotenv
@@ -8,7 +9,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, select
 from models.User import User
-from schemas.User import UserResponse, UsersListResponse, UserScheme, UserDeleteScheme, UserLogin
+from schemas.User import UserResponse, UsersListResponse, UserScheme, UserDeleteScheme, UserLogin, Token
 from schemas.pasword_hashing import hash, hash_with_salt
 from utils.auth import create_token
 
@@ -21,7 +22,7 @@ class UserRepository:
     def __init__(self, database: async_sessionmaker[AsyncSession]):
         self.async_session = database
 
-    async def authenticate_user(self, request: UserLogin) -> str:
+    async def authenticate_user(self, request: UserLogin) -> Token:
         try:
             user = await self.get_user_by_username(email=request.email)
             hashed = hash(password=request.password)
@@ -39,7 +40,7 @@ class UserRepository:
         try:
             hashed = hash_with_salt(password=request.password)
             request.password = hashed
-            user_dict = request.dict()  # Convert UserScheme instance to a dictionary
+            user_dict = request.dict()
             user = User(**user_dict)
             async with self.async_session as session:
                 session.add(user)
@@ -50,15 +51,6 @@ class UserRepository:
         except Exception as e:
             print(f"An error occurred while creating the user: {e}")
             raise e
-
-    async def create_blank_user(self, email: str) ->UserResponse:
-
-        async with self.async_session as session:
-            session.add(user)
-            await session.commit()
-            logger.info(f"New user created: {request.username}")
-            return user
-
 
     async def get_user(self, id: int) -> UserResponse:
         async with self.async_session as session:
@@ -183,12 +175,21 @@ class UserRepository:
             print(f"An error occurred while creating the user: {e}")
             raise e
 
-    def user_exists(self, email: str) -> bool:
-        async with self.async_session as session:
-            query = select(User).filter(User.email == email)
-            result = await session.execute(query)
-            user = result.scalar_one_or_none()
-            if user is None:
-                return False
-            else:
-                return True
+    async def get_user_by_email(self, email: str) -> UserResponse:
+        try:
+            async with self.async_session as session:
+                query = select(User).filter(User.email == email)
+                result = await session.execute(query)
+                user = result.scalar_one_or_none()
+                if user is None:
+                    return None
+                else:
+                    return user
+        except Exception as e:
+            print(f"An error occurred while creating the user: {e}")
+            raise e
+
+    def create_password(self):
+        password = str(datetime.datetime.utcnow())
+        pass_hashed = hash_with_salt(password=password)
+        return pass_hashed
