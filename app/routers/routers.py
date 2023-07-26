@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from repositories.user_repository import UserRepository
 from schemas.User import UserScheme, UserResponse, UsersListResponse, UserDeleteScheme, UserLogin, Token
@@ -7,6 +8,7 @@ from utils.auth import get_user_email_by_token
 from utils.auth import get_current_user
 router = APIRouter()
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 
 @router.post("/users/create", response_model=UserResponse)
 async def create_user(request: UserScheme, db: AsyncSession = Depends(get_db)) -> UserResponse:
@@ -54,10 +56,9 @@ async def get_user(id: int, db: AsyncSession = Depends(get_db)) -> UserResponse:
     return query
 
 
-@router.post("/me", response_model=UserResponse)
-async def get_me(request: Token, db: AsyncSession = Depends(get_db)) -> UserResponse:
+@router.get("/me", response_model=UserResponse)
+async def get_me(current_user: str = Depends(get_current_user), db: AsyncSession = Depends(get_db)) -> UserResponse:
     user_repository = UserRepository(database=db)
-    current_user = get_current_user(request.token)
     user = await user_repository.get_user_by_email(email=current_user)
 
     if not user:

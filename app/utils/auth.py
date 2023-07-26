@@ -67,9 +67,13 @@ def get_user_email_by_token(request: Token) -> str:
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 
 
-def get_current_user(token: str = Depends(oauth2_scheme)) -> str:
-    try:
+def get_token(token: str = Depends(oauth2_scheme)) -> str:
+    return token
 
+
+def get_current_user(token: str = Depends(get_token)) -> str:
+
+    try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         username: str = payload.get("username")
         email: str = payload.get("email")
