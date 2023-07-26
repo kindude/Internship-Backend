@@ -2,7 +2,7 @@ import uvicorn
 from fastapi import FastAPI
 from ENV import host, port
 from fastapi.middleware.cors import CORSMiddleware
-from routers.routes import router
+from routers.routers import router
 
 app = FastAPI()
 
@@ -19,8 +19,6 @@ app.include_router(router)
 
 
 @app.api_route('/', methods=['GET', 'DELETE'])
-
-
 def main():
     return {
         "status_code": 200,

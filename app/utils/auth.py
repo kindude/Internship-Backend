@@ -9,7 +9,7 @@ from fastapi.security import OAuth2PasswordBearer
 from ENV import SECRET_KEY, CLIENT_SECRET, ALGORITHM, API_AUDIENCE
 
 
-from schemas.User import UserResponse, UserScheme, Token
+from schemas.User import UserResponse, UserScheme, Token, UserToken
 
 from fastapi import Depends, HTTPException
 from jose import jwt, JWTError
@@ -35,7 +35,7 @@ def create_token(user: UserResponse):
     return token
 
 
-def get_user_by_token(request: Token):
+def get_user_by_token(request: Token) -> UserToken:
     try:
         payload = jwt.decode(request.token, SECRET_KEY, algorithms=["HS256"])
 
@@ -43,15 +43,9 @@ def get_user_by_token(request: Token):
         email: str = payload.get("email")
 
         if username is not None:
-            return UserScheme(
+            return UserToken(
                 username=username,
                 email=email,
-                password="ds",
-                city="ds",
-                country="ds",
-                phone="sd",
-                status=True,
-                roles=["ds", "sd"]
             )
 
     except JWTError:

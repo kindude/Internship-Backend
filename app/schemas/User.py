@@ -29,7 +29,9 @@ class UserResponse(BaseModel):
     status: bool
     roles: List[str]
 
-
+class UserToken(BaseModel):
+    username:str
+    email:str
 class SignIn(BaseModel):
     email: EmailStr
     password: str
