@@ -1,3 +1,5 @@
+from http.client import HTTPException
+
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -29,15 +31,24 @@ async def create_user(request: UserScheme, db: AsyncSession = Depends(get_db)) -
 
 
 @router.post("/users/update/{id}", response_model=UserResponse)
-async def update_user(id:int, request: UserScheme, db: AsyncSession = Depends(get_db)) -> UserResponse:
+async def update_user(id:int, request: UserScheme, db: AsyncSession = Depends(get_db), current_user: str = Depends(get_current_user)) -> UserResponse:
     user_repository = UserRepository(database=db)
+    current_user_profile = await user_repository.get_user_by_email(email=current_user)
+    if current_user_profile.id != id:
+        raise HTTPException(status_code=403, detail="You are not allowed to update other users' profiles.")
+
     updated_user = await user_repository.update_user(id=id, request=request)
     return updated_user
 
 
 @router.delete("/users/{id}", response_model=UserDeleteScheme)
-async def delete_user(id: int, db: AsyncSession = Depends(get_db)) -> UserDeleteScheme:
+async def delete_user(id: int, db: AsyncSession = Depends(get_db), current_user: str = Depends(get_current_user)) -> UserDeleteScheme:
     user_repository = UserRepository(database=db)
+    current_user_profile = await user_repository.get_user_by_email(email=current_user)
+
+    if current_user_profile.id != id:
+        raise HTTPException(status_code=403, detail="You are not allowed to delete other users' profiles.")
+
     res = await user_repository.del_user(id=id)
     return res
 

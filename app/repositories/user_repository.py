@@ -115,7 +115,7 @@ class UserRepository:
                 user = await session.get(User, id)
                 if user is not None:
                     user.username = request.username
-                    user.email = request.email
+                    user.email = user.email
                     user.password = hash(password=request.password)
                     user.city = request.city
                     user.country = request.country
