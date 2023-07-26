@@ -25,11 +25,12 @@ class UserRepository:
     async def authenticate_user(self, request: UserLogin) -> Token:
         try:
             user = await self.get_user_by_username(email=request.email)
-            hashed = hash(password=request.password)
             hashed_request_password = hash_with_salt(request.password)
             if hashed_request_password == user.password:
                 token = create_token(user)
-                return token
+                return Token(
+                    token=token
+                )
             else:
                 return False
         except Exception as e:

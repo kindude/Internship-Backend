@@ -54,12 +54,37 @@ async def get_user(id: int, db: AsyncSession = Depends(get_db)) -> UserResponse:
     return query
 
 
-@router.post("/users/me", response_model=UserResponse)
+@router.post("/me", response_model=UserResponse)
 async def get_me(request: Token, db: AsyncSession = Depends(get_db)) -> UserResponse:
     user_repository = UserRepository(database=db)
-    email = get_user_email_by_token(request=request)
-    user = await user_repository.get_user_by_email(email=email)
-    return user
+    current_user = get_current_user(request.token)
+    user = await user_repository.get_user_by_email(email=current_user)
+
+    if not user:
+        user = UserScheme(
+            email=current_user,
+            username=current_user,
+            password=user_repository.create_password(),
+            city="None",
+            country="None",
+            phone=13 * "0",
+            status=True,
+            roles=["user"]
+        )
+        created_user = await user_repository.create_user(user)
+        return created_user
+    else:
+        return UserResponse(
+            id=user.id,
+            username=user.username,
+            email=user.email,
+            password=user.password,
+            city=user.city,
+            country=user.country,
+            phone=user.phone,
+            status=user.status,
+            roles=user.roles,
+        )
 
 
 @router.get("/users/{username}", response_model=UserScheme)

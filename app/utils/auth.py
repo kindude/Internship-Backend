@@ -21,11 +21,6 @@ def create_token(user: UserResponse):
     payload = {
         "username": user.username,
         "email": user.email,
-        # "city": user.city,
-        # "country": user.country,
-        # "phone": user.phone,
-        # "status": user.status,
-        # "roles": user.roles,
         "exp": expiration
     }
     algorithm = os.getenv("ALGORITHM")
@@ -45,7 +40,7 @@ def get_user_by_token(request: Token) -> UserToken:
         if username is not None:
             return UserToken(
                 username=username,
-                email=email,
+                email=email
             )
 
     except JWTError:
@@ -73,6 +68,16 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 
 
 def get_current_user(token: str = Depends(oauth2_scheme)) -> str:
-    payload = jwt.decode(token, CLIENT_SECRET, algorithms=ALGORITHM, audience=API_AUDIENCE, options={"verify_signature": False})
-    email = payload.get('email')
-    return email
+    try:
+
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        username: str = payload.get("username")
+        email: str = payload.get("email")
+        if username is not None:
+            return email
+        else:
+            return None
+    except:
+        payload = jwt.decode(token, CLIENT_SECRET, algorithms=ALGORITHM, audience=API_AUDIENCE, options={"verify_signature": False})
+        email = payload.get('email')
+        return email
