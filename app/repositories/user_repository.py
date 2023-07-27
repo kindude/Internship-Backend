@@ -52,6 +52,7 @@ class UserRepository:
             print(f"An error occurred while creating the user: {e}")
             raise e
 
+
     async def get_user(self, id: int) -> UserResponse:
         async with self.async_session as session:
             query = select(User).filter(User.id == id)
