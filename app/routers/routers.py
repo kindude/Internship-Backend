@@ -83,7 +83,7 @@ async def get_me(current_user: str = Depends(get_current_user), db: AsyncSession
             status=True,
             roles=["user"]
         )
-        created_user = await user_repository.create_user(user)
+        created_user = await user_repository.create_user(request=user)
         return created_user
     else:
         return UserResponse(
