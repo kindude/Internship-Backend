@@ -141,3 +141,4 @@ async def create_user_from_auth0(access_token: str, db: AsyncSession = Depends(g
             status=user.status,
             roles=user.roles,
         )
+
