@@ -11,7 +11,7 @@ from sqlalchemy import func, select
 from models.User import User
 from schemas.User import UserResponse, UsersListResponse, UserScheme, UserDeleteScheme, UserLogin, Token
 from schemas.pasword_hashing import hash, hash_with_salt
-from utils.auth import create_token
+from utils.create_token import create_token
 
 logger = logging.getLogger(__name__)
 load_dotenv()
