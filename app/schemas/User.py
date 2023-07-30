@@ -29,7 +29,9 @@ class UserResponse(BaseModel):
     status: bool
     roles: List[str]
 
-
+class UserToken(BaseModel):
+    username:str
+    email:str
 class SignIn(BaseModel):
     email: EmailStr
     password: str
@@ -53,6 +55,16 @@ class UsersListResponse(BaseModel):
 class UserDetailsResponse(BaseModel):
     user: UserScheme
 
+
 class UserDeleteScheme(BaseModel):
     message: str
     id: int
+
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+
+class Token(BaseModel):
+    token:str
