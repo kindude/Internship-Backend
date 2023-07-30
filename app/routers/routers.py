@@ -91,5 +91,5 @@ async def create_user_from_auth0(access_token: str, db: AsyncSession = Depends(g
     user_repository = UserRepository(database=db)
     user_email = await get_current_user(token=access_token)
     user = await user_repository.get_user_by_email(email=user_email.email)
-    user_resp = user_scheme_raw_from_data(user=user, db=user_repository)
+    user_resp = await user_scheme_raw_from_data(user=user, db=user_repository)
     return user_resp

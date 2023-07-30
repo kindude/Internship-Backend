@@ -76,7 +76,7 @@ async def get_current_user(token: str = Depends(get_token), db:AsyncSession = De
 
     user_repository = UserRepository(database=db)
     user = await user_repository.get_user_by_email(email=email)
-    user_scheme_response = await user_scheme_raw_from_data(user, user_repository)
-    return(user_scheme_response)
+    user_scheme_response = await user_scheme_raw_from_data(user=user, db=user_repository)
+    return user_scheme_response
 
 
