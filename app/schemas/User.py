@@ -1,7 +1,3 @@
-from pydantic import EmailStr
-
-from typing import List, Dict, Union
-from pydantic import BaseModel
 
 from typing import List, Union
 from pydantic import BaseModel, EmailStr
@@ -67,4 +63,4 @@ class UserLogin(BaseModel):
 
 
 class Token(BaseModel):
-    token:str
+    token: str

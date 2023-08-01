@@ -6,9 +6,11 @@ from routers.routers import router
 
 app = FastAPI()
 
+origins = ["http://localhost:3000", "http://localhost:3001"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_methods=["*"],
     allow_headers=["*"],
     allow_credentials=True,
@@ -18,9 +20,6 @@ app.add_middleware(
 app.include_router(router)
 
 
-
-@app.api_route("/me", methods=['POST' ])
-
 @app.api_route('/', methods=['GET', 'DELETE'])
 def main():
     return {
@@ -28,7 +27,6 @@ def main():
         "detail": "ok",
         "result": "working"
     }
-
 
 if __name__ == '__main__':
     uvicorn.run("main:app", host=host, port=port, reload=True)

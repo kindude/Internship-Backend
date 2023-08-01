@@ -4,12 +4,12 @@ from repositories.user_repository import UserRepository
 from schemas.User import UserScheme, UserResponse
 
 
-async def user_scheme_raw_from_data(user, db:UserRepository) -> UserResponse:
+async def user_scheme_raw_from_data(user, payload,db:UserRepository) -> UserResponse:
 
     if not user:
         user_to_add = UserScheme(
-            email=user.email,
-            username=user.email,
+            email=payload.get("email"),
+            username=payload.get("email"),
             password=db.create_password(),
             city="None",
             country="None",

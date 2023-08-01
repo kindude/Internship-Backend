@@ -13,22 +13,27 @@ router = APIRouter()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 
-@router.post("/users/create", response_model=UserResponse)
+
+@router.post("/users/register", response_model=UserResponse)
 async def create_user(request: UserScheme, db: AsyncSession = Depends(get_db)) -> UserResponse:
     user_repository = UserRepository(database=db)
-    user = await user_repository.create_user(request=request)
-
-    return UserResponse(
-        id=user.id,
-        username=user.username,
-        email=user.email,
-        password=user.password,
-        city=user.city,
-        country=user.country,
-        phone=user.phone,
-        status=user.status,
-        roles=user.roles,
-    )
+    exists = await user_repository.get_user_by_email(email=request.email)
+    if exists is None:
+        user = await user_repository.create_user(request=request)
+        user = await user_repository.get_user_by_email(email=request.email)
+        return UserResponse(
+            id=user.id,
+            username=user.username,
+            email=user.email,
+            password=user.password,
+            city=user.city,
+            country=user.country,
+            phone=user.phone,
+            status=user.status,
+            roles=user.roles,
+        )
+    else:
+        return exists
 
 
 @router.post("/users/update/{id}", response_model=UserResponse)
@@ -68,7 +73,7 @@ async def get_user(id: int, db: AsyncSession = Depends(get_db)) -> UserResponse:
     return query
 
 
-@router.get("/me", response_model=UserResponse)
+@router.post("/me", response_model=UserResponse)
 async def get_me(current_user: UserResponse = Depends(get_current_user)) -> UserResponse:
     return current_user
 
@@ -79,11 +84,11 @@ async def get_user_by_username(username: str, db: AsyncSession = Depends(get_db)
     return query
 
 
-@router.post("/users/login", response_model=Token)
-async def user_login(request: UserLogin, db: AsyncSession = Depends(get_db)) -> Token:
+@router.post("/users/login", response_model=str)
+async def user_login(request: UserLogin, db: AsyncSession = Depends(get_db)) -> str:
     user_repository = UserRepository(database=db)
     token = await user_repository.authenticate_user(request=request)
-    return token
+    return token.token
 
 
 @router.post("/create_user_from_auth0/", response_model=UserResponse)
