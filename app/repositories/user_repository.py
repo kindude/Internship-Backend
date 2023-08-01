@@ -11,7 +11,7 @@ from sqlalchemy import func, select
 from models.User import User
 from schemas.User import UserResponse, UsersListResponse, UserScheme, UserDeleteScheme, UserLogin, Token
 from schemas.pasword_hashing import hash, hash_with_salt
-from utils.auth import create_token
+from utils.create_token import create_token
 
 logger = logging.getLogger(__name__)
 load_dotenv()
@@ -51,6 +51,7 @@ class UserRepository:
         except Exception as e:
             print(f"An error occurred while creating the user: {e}")
             raise e
+
 
     async def get_user(self, id: int) -> UserResponse:
         async with self.async_session as session:
@@ -115,7 +116,7 @@ class UserRepository:
                 user = await session.get(User, id)
                 if user is not None:
                     user.username = request.username
-                    user.email = request.email
+                    user.email = user.email
                     user.password = hash(password=request.password)
                     user.city = request.city
                     user.country = request.country
