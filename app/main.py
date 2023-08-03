@@ -2,7 +2,8 @@ import uvicorn
 from fastapi import FastAPI
 from ENV import host, port
 from fastapi.middleware.cors import CORSMiddleware
-from routers.routers import router
+from routers.routers_user import router_user
+from routers.routers_company import router_companies
 
 app = FastAPI()
 
@@ -17,8 +18,8 @@ app.add_middleware(
     expose_headers=["Content-Disposition"]
 )
 
-app.include_router(router)
-
+app.include_router(router_user)
+app.include_router(router_companies)
 
 @app.api_route('/', methods=['GET', 'DELETE'])
 def main():
