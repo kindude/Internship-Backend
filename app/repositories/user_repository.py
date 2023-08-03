@@ -24,7 +24,7 @@ class UserRepository:
 
     async def authenticate_user(self, request: UserLogin) -> Token:
         try:
-            user = await self.get_user_by_username(email=request.email)
+            user = await self.get_user_by_email(email=request.email)
             hashed_request_password = hash_with_salt(request.password)
             if hashed_request_password == user.password:
                 token = create_token(user)
@@ -129,10 +129,10 @@ class UserRepository:
         except Exception as e:
             print(f"An error occurred while updating user: {e}")
 
-    async def get_user_by_username(self, email: str) -> UserResponse:
+    async def get_user_by_username(self, username: str) -> UserResponse:
         try:
             async with self.async_session as session:
-                query = select(User).filter(User.email == email)
+                query = select(User).filter(User.username == username)
                 result = await session.execute(query)
                 user = result.scalar_one_or_none()
                 if user is None:
@@ -162,7 +162,17 @@ class UserRepository:
                 if user is None:
                     return None
                 else:
-                    return user
+                     return UserResponse(
+                        id=user.id,
+                        username=user.username,
+                        email=user.email,
+                        password=user.password,
+                        city=user.password,
+                        country=user.country,
+                        phone=user.phone,
+                        status=user.status,
+                        roles=user.roles
+                    )
         except Exception as e:
             print(f"An error occurred while creating the user: {e}")
             raise e

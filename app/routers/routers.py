@@ -3,7 +3,10 @@ from http.client import HTTPException
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from repositories.company_repository import CompanyRepository
 from repositories.user_repository import UserRepository
+from schemas.Company import CompanyResponse, CompanyScheme, CompanyDeleteScheme, CompanyListResponse
 from schemas.User import UserScheme, UserResponse, UsersListResponse, UserDeleteScheme, UserLogin, Token
 from db.get_db import get_db
 from services.create_user_scheme import user_scheme_raw_from_data
@@ -37,9 +40,9 @@ async def create_user(request: UserScheme, db: AsyncSession = Depends(get_db)) -
 
 
 @router.post("/users/update/{id}", response_model=UserResponse)
-async def update_user(id:int, request: UserScheme, db: AsyncSession = Depends(get_db), current_user: str = Depends(get_current_user)) -> UserResponse:
+async def update_user(id: int, request: UserScheme, db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)) -> UserResponse:
     user_repository = UserRepository(database=db)
-    current_user_profile = await user_repository.get_user_by_email(email=current_user)
+    current_user_profile = await user_repository.get_user_by_email(email=current_user.email)
     if current_user_profile.id != id:
         raise HTTPException(status_code=403, detail="You are not allowed to update other users' profiles.")
 
@@ -48,9 +51,9 @@ async def update_user(id:int, request: UserScheme, db: AsyncSession = Depends(ge
 
 
 @router.delete("/users/{id}", response_model=UserDeleteScheme)
-async def delete_user(id: int, db: AsyncSession = Depends(get_db), current_user: str = Depends(get_current_user)) -> UserDeleteScheme:
+async def delete_user(id: int, db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)) -> UserDeleteScheme:
     user_repository = UserRepository(database=db)
-    current_user_profile = await user_repository.get_user_by_email(email=current_user)
+    current_user_profile = await user_repository.get_user_by_email(email=current_user.email)
 
     if current_user_profile.id != id:
         raise HTTPException(status_code=403, detail="You are not allowed to delete other users' profiles.")
@@ -77,8 +80,9 @@ async def get_user(id: int, db: AsyncSession = Depends(get_db)) -> UserResponse:
 async def get_me(current_user: UserResponse = Depends(get_current_user)) -> UserResponse:
     return current_user
 
-@router.get("/users/{username}", response_model=UserScheme)
-async def get_user_by_username(username: str, db: AsyncSession = Depends(get_db)) -> UserScheme:
+
+@router.get("/users/{username}", response_model=UserResponse)
+async def get_user_by_username(username: str, db: AsyncSession = Depends(get_db)) -> UserResponse:
     user_repository = UserRepository(database=db)
     query = await user_repository.get_user_by_username(username=username)
     return query
@@ -91,10 +95,40 @@ async def user_login(request: UserLogin, db: AsyncSession = Depends(get_db)) -> 
     return token.token
 
 
-@router.post("/create_user_from_auth0/", response_model=UserResponse)
-async def create_user_from_auth0(access_token: str, db: AsyncSession = Depends(get_db)) -> UserResponse:
-    user_repository = UserRepository(database=db)
-    user_email = await get_current_user(token=access_token)
-    user = await user_repository.get_user_by_email(email=user_email.email)
-    user_resp = await user_scheme_raw_from_data(user=user, db=user_repository)
-    return user_resp
+@router.post("/companies/update/{id}", response_model=CompanyResponse)
+async def update_company(id: int, request: CompanyScheme, db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)) -> CompanyResponse:
+    company_repository = CompanyRepository(database=db)
+    if current_user.id != request.owner_id:
+        raise HTTPException(status_code=403, detail="You are not allowed to update other users' profiles.")
+    company_updated = await company_repository.update_company(id, request)
+    return company_updated
+
+
+@router.delete("/companies/{id}", response_model=CompanyDeleteScheme)
+async def delete_company(id: int, request: CompanyScheme, db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)) -> CompanyDeleteScheme:
+    company_repository = CompanyRepository(database=db)
+    if current_user.id != request.owner_id:
+        raise HTTPException(status_code=403, detail="You are not allowed to update other users' profiles.")
+    company_deleted = await company_repository.delete_company(id)
+    return company_deleted
+
+
+@router.get("/companies/all", response_model=CompanyListResponse)
+async def get_all(page: int = 1, per_page: int = 10, db: AsyncSession = Depends(get_db)) -> CompanyListResponse:
+    company_repository = CompanyRepository(database=db)
+    response = await company_repository.get_companies(page=page, per_page=per_page)
+    return response
+
+
+@router.get("/companies/{id}", response_model=CompanyResponse)
+async def get_company(id:int, db:AsyncSession = Depends(get_db)) -> CompanyResponse:
+    company_repository = CompanyRepository(database=db)
+    company = await company_repository.get_company(id)
+    return company
+
+
+@router.post("/companies/{id}/visibility", response_model=CompanyResponse)
+async def set_visibility(id:int, request: str, db: AsyncSession = Depends(get_db)) -> CompanyResponse:
+    company_repository = CompanyRepository(database=db)
+    company = await company_repository.change_visibility(id, request)
+    return company
