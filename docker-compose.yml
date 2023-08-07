@@ -14,6 +14,8 @@ services:
       - ${POSTGRES_PORTS}:${POSTGRES_PORTS}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - my-network
 
   redis:
     image: redis
@@ -24,6 +26,8 @@ services:
       - ${REDIS_PORTS}:${REDIS_PORTS}
     volumes:
       - redis_data:/data
+    networks:
+      - my-network
 
   app:
     build:
@@ -38,10 +42,12 @@ services:
       - redis
     volumes:
       - ./app:/app
+    networks:
+      - my-network
 
 networks:
   my-network:
-    external: true
+    external: false  # Set it to true if you have a custom external network.
 
 volumes:
   postgres_data:

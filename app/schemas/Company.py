@@ -4,12 +4,16 @@ from pydantic import BaseModel, EmailStr
 from schemas.User import UserScheme
 
 
-class CompanyScheme(BaseModel):
+class CompanySchemeRequest(BaseModel):
     name: str
     description: str
     site: str
     city: str
     country: str
+    is_visible: bool
+
+
+class CompanyScheme(CompanySchemeRequest):
     owner_id: int
 
 
@@ -18,7 +22,7 @@ class CompanyResponse(CompanyScheme):
 
 
 class CompanyListResponse(BaseModel):
-    users: List[CompanyScheme]
+    companies: List[CompanyResponse]
 
 
 class CompanyDeleteScheme(BaseModel):

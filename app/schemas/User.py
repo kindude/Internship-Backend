@@ -1,5 +1,5 @@
 
-from typing import List, Union
+from typing import List, Union, Optional
 from pydantic import BaseModel, EmailStr
 
 
@@ -21,7 +21,7 @@ class UserResponse(BaseModel):
     password: str
     city: str
     country: str
-    phone: str
+    phone: Optional[str]
     status: bool
     roles: List[str]
 
@@ -45,7 +45,11 @@ class UserUpdateRequest(BaseModel):
 
 
 class UsersListResponse(BaseModel):
-    users: List[UserScheme]
+    users: List[UserResponse]
+    per_page: int
+    page: int
+    total: int
+    total_pages: int
 
 
 class UserDetailsResponse(BaseModel):

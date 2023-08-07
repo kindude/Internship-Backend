@@ -9,12 +9,10 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, select
 
-from models.Company import Company
-from models.User import User
-from schemas.Company import CompanyScheme, CompanyResponse, CompanyDeleteScheme, CompanyListResponse
-from schemas.User import UserResponse, UsersListResponse, UserScheme, UserDeleteScheme, UserLogin, Token
-from schemas.pasword_hashing import hash, hash_with_salt
-from utils.create_token import create_token
+from models.Models import Company
+
+from schemas.Company import CompanyScheme, CompanyResponse, CompanyDeleteScheme, CompanyListResponse, \
+    CompanySchemeRequest
 
 logger = logging.getLogger(__name__)
 load_dotenv()
@@ -32,6 +30,7 @@ class CompanyRepository:
             async with self.async_session as session:
                 session.add(company)
                 await session.commit()
+                await session.refresh(company, attribute_names=["id"])
                 logger.info(f"New user created: {request.name}")
                 return company
         except Exception as e:
@@ -52,7 +51,7 @@ class CompanyRepository:
         query = select(Company).slice(offset, offset + per_page)
         companies = await self.async_session.execute(query)
         company_list = [self.company_to_scheme(company) for company in companies.scalars().all()]
-        return CompanyListResponse(users=company_list)
+        return CompanyListResponse(companies=company_list)
 
     def company_to_scheme(self, company: Company) -> CompanyResponse:
         return CompanyResponse(
@@ -62,6 +61,7 @@ class CompanyRepository:
             site=company.site,
             city=company.city,
             country=company.country,
+            is_visible=company.is_visible,
             owner_id=company.owner_id,
         )
 
@@ -104,6 +104,7 @@ class CompanyRepository:
                     company.city = request.city
                     company.country = request.country
                     company.owner_id = request.owner_id
+                    company.is_visible = request.is_visible
                     await session.commit()
                     logger.info(f"Company updated: ID {id}")
                     return company

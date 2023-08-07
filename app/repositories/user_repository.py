@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import datetime
 import logging
+from math import ceil
 
 from dotenv import load_dotenv
 from sqlalchemy import select, delete, desc
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, select
-from models.User import User
+from models.Models import User
 from schemas.User import UserResponse, UsersListResponse, UserScheme, UserDeleteScheme, UserLogin, Token
 from schemas.pasword_hashing import hash, hash_with_salt
 from utils.create_token import create_token
@@ -52,7 +53,6 @@ class UserRepository:
             print(f"An error occurred while creating the user: {e}")
             raise e
 
-
     async def get_user(self, id: int) -> UserResponse:
         async with self.async_session as session:
             query = select(User).filter(User.id == id)
@@ -62,15 +62,26 @@ class UserRepository:
                 return None
             return user
 
-    async def get_users(self, page: int = 1, per_page: int = 10) -> UsersListResponse:
+    async def get_users(self, page: int, per_page: int) -> UsersListResponse:
+        # Calculate the total count of users in the database
+        total_count = await self.async_session.scalar(select(func.count()).select_from(User))
+
+        # Calculate the offset and apply pagination to the query
         offset = (page - 1) * per_page
         query = select(User).slice(offset, offset + per_page)
-        users = await self.async_session.execute(query)
-        user_list = [self.user_to_scheme(user) for user in users.scalars().all()]
-        return UsersListResponse(users=user_list)
 
-    def user_to_scheme(self, user: User) -> UserScheme:
-        return UserScheme(
+        # Execute the query and get the users for the current page
+        users = await self.async_session.execute(query)
+        user_list = [self.user_to_response(user) for user in users.scalars().all()]
+
+        # Calculate the total pages based on the total count and per_page value
+        total_pages = ceil(total_count / per_page)
+
+        return UsersListResponse(users=user_list, per_page=per_page, page=page, total=total_count,
+                                 total_pages=total_pages)
+
+    def user_to_response(self, user: User) -> UserResponse:
+        return UserResponse(
             id=user.id,
             username=user.username,
             email=user.email,
@@ -110,7 +121,7 @@ class UserRepository:
         except Exception as e:
             print(f"An error occurred while deleting user: {e}")
 
-    async def update_user(self, id: int, request: UserScheme) -> UserResponse:
+    async def update_user(self, id: int, request: UserScheme) -> User:
         try:
             async with self.async_session as session:
                 user = await session.get(User, id)
@@ -162,7 +173,7 @@ class UserRepository:
                 if user is None:
                     return None
                 else:
-                     return UserResponse(
+                    return UserResponse(
                         id=user.id,
                         username=user.username,
                         email=user.email,
