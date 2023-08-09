@@ -48,25 +48,30 @@ class CompanyRepository:
             return company
 
     async def get_companies(self, page: int, per_page: int, current_user_id: int) -> CompanyListResponse:
+        async with self.async_session as session:
+            offset = (page - 1) * per_page
 
-        offset = (page - 1) * per_page
+            query = select(Company).where(
+                or_(
+                    Company.is_visible == True,
+                    Company.owner_id == current_user_id
+                )
+            ).order_by(Company.id).offset(offset).limit(per_page)
 
-        query = select(Company).where(
-            or_(
-                Company.is_visible == True,
-                Company.owner_id == current_user_id
-            )
-        ).order_by(Company.id).offset(offset)
+            companies = await session.execute(query)
 
-        companies = await self.async_session.execute(query)
+            company_list = [self.company_to_response(company) for company in companies.scalars().all()]
+            total_count = await self.async_session.scalar(select(func.count()).select_from(Company).where(
+                or_(
+                    Company.is_visible == True,
+                    Company.owner_id == current_user_id
+                )
+            ))
+            print(total_count)
+            total_pages = ceil(total_count / per_page)
 
-        company_list = [self.company_to_response(company) for company in companies.scalars().all()]
-        total_count = len(company_list)
-        print(total_count)
-        total_pages = ceil(total_count / per_page)
-
-        return CompanyListResponse(companies=company_list, per_page=per_page, page=page, total=total_count,
-                                   total_pages=total_pages)
+            return CompanyListResponse(companies=company_list, per_page=per_page, page=page, total=total_count,
+                                       total_pages=total_pages)
 
 
     def company_to_response(self, company: Company) -> CompanyResponse:
