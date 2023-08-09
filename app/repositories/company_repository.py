@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import datetime
 import logging
+from math import ceil
 
 from dotenv import load_dotenv
 from sqlalchemy import select, delete, desc
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import func, select
+from sqlalchemy import select, func, or_
 
 from models.Models import Company
 
@@ -46,14 +47,29 @@ class CompanyRepository:
                 return None
             return company
 
-    async def get_companies(self, page: int = 1, per_page: int = 10) -> CompanyListResponse:
-        offset = (page - 1) * per_page
-        query = select(Company).slice(offset, offset + per_page)
-        companies = await self.async_session.execute(query)
-        company_list = [self.company_to_scheme(company) for company in companies.scalars().all()]
-        return CompanyListResponse(companies=company_list)
+    async def get_companies(self, page: int, per_page: int, current_user_id: int) -> CompanyListResponse:
 
-    def company_to_scheme(self, company: Company) -> CompanyResponse:
+        offset = (page - 1) * per_page
+
+        query = select(Company).where(
+            or_(
+                Company.is_visible == True,
+                Company.owner_id == current_user_id
+            )
+        ).order_by(Company.id).offset(offset)
+
+        companies = await self.async_session.execute(query)
+
+        company_list = [self.company_to_response(company) for company in companies.scalars().all()]
+        total_count = len(company_list)
+        print(total_count)
+        total_pages = ceil(total_count / per_page)
+
+        return CompanyListResponse(companies=company_list, per_page=per_page, page=page, total=total_count,
+                                   total_pages=total_pages)
+
+
+    def company_to_response(self, company: Company) -> CompanyResponse:
         return CompanyResponse(
             id=company.id,
             name=company.name,

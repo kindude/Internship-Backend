@@ -66,18 +66,17 @@ class UserRepository:
             return user
 
     async def get_users(self, page: int, per_page: int) -> UsersListResponse:
-        # Calculate the total count of users in the database
+
         total_count = await self.async_session.scalar(select(func.count()).select_from(User))
 
-        # Calculate the offset and apply pagination to the query
         offset = (page - 1) * per_page
         query = select(User).slice(offset, offset + per_page)
 
-        # Execute the query and get the users for the current page
+
         users = await self.async_session.execute(query)
         user_list = [self.user_to_response(user) for user in users.scalars().all()]
 
-        # Calculate the total pages based on the total count and per_page value
+
         total_pages = ceil(total_count / per_page)
 
         return UsersListResponse(users=user_list, per_page=per_page, page=page, total=total_count,

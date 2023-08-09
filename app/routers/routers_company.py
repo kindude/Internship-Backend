@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -53,9 +53,9 @@ async def delete_company(id: int, request: CompanyScheme, db: AsyncSession = Dep
 
 
 @router_companies.get("/companies/all", response_model=CompanyListResponse)
-async def get_all_companies(page: int = 1, per_page: int = 20, db: AsyncSession = Depends(get_db)) -> CompanyListResponse:
+async def get_all_companies(page: int = Query(1, alias="page"), per_page: int = Query(5), db: AsyncSession = Depends(get_db), current_user:UserResponse = Depends(get_current_user)) -> CompanyListResponse:
     company_repository = CompanyRepository(database=db)
-    response = await company_repository.get_companies(page=page, per_page=per_page)
+    response = await company_repository.get_companies(page=page, per_page=per_page, current_user_id=current_user.id)
     return response
 
 

@@ -72,7 +72,6 @@ async def delete_user(id: int, db: AsyncSession = Depends(get_db), current_user:
 @router_user.get("/users/all", response_model=UsersListResponse)
 async def get_all(page: int = Query(1, alias="page"), per_page: int = Query(10), db: AsyncSession = Depends(get_db)) -> UsersListResponse:
     user_repository = UserRepository(database=db)
-
     response = await user_repository.get_users(page=page, per_page=per_page)
     return response
 
