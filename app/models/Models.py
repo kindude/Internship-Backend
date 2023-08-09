@@ -1,7 +1,6 @@
-import os
 
-from sqlalchemy import Column, Integer, String, Boolean, ARRAY, ForeignKey, create_engine
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer, String, Boolean, ARRAY, ForeignKey
+
 from sqlalchemy.orm import relationship
 
 from models.BaseModel import BaseModel
@@ -46,7 +45,7 @@ class Company(BaseModel):
     city = Column(String, nullable=True)
     country = Column(String, nullable=True)
     is_visible = Column(Boolean, default=True)
-    owner_id = Column(Integer, ForeignKey('users.id'), nullable=True)
+    owner_id = Column(Integer, ForeignKey('users.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
     owner = relationship('User', back_populates='companies')
 
     def to_dict(self):

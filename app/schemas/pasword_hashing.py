@@ -9,8 +9,6 @@ def hash(password:str) ->str:
     return hashed
 
 def hash_with_salt(password: str) -> str:
-    salt = str(ENV.salt)
-    database_password = str(password) + salt
-    # Use a secure hashing algorithm (SHA-256) instead of MD5
+    database_password = str(password) + ENV.salt
     hashed = hashlib.sha256(database_password.encode()).hexdigest()
     return hashed

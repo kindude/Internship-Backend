@@ -10,7 +10,8 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, select
 from models.Models import User
-from schemas.User import UserResponse, UsersListResponse, UserScheme, UserDeleteScheme, UserLogin, Token
+from schemas.User import UserResponse, UsersListResponse, UserScheme, UserDeleteScheme, UserLogin, Token, \
+    UserResponseNoPass
 from schemas.pasword_hashing import hash, hash_with_salt
 from utils.create_token import create_token
 
@@ -27,6 +28,8 @@ class UserRepository:
         try:
             user = await self.get_user_by_email(email=request.email)
             hashed_request_password = hash_with_salt(request.password)
+            print(hashed_request_password)
+            print(user.password)
             if hashed_request_password == user.password:
                 token = create_token(user)
                 return Token(
@@ -53,7 +56,7 @@ class UserRepository:
             print(f"An error occurred while creating the user: {e}")
             raise e
 
-    async def get_user(self, id: int) -> UserResponse:
+    async def get_user(self, id: int) -> UserResponseNoPass:
         async with self.async_session as session:
             query = select(User).filter(User.id == id)
             result = await session.execute(query)

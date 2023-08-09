@@ -25,6 +25,17 @@ class UserResponse(BaseModel):
     status: bool
     roles: List[str]
 
+class UserResponseNoPass(BaseModel):
+    id: int
+    username: str
+    email: str
+    city: str
+    country: str
+    phone: Optional[str]
+    status: bool
+    roles: List[str]
+
+
 class UserToken(BaseModel):
     username:str
     email:str
