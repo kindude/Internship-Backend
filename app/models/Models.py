@@ -1,10 +1,11 @@
 
+
 from sqlalchemy import Column, Integer, String, Boolean, ARRAY, ForeignKey
 
 from sqlalchemy.orm import relationship
 
 from models.BaseModel import BaseModel
-
+from sqlalchemy import Column, Integer, String, ForeignKey, Enum
 
 class User(BaseModel):
     __tablename__ = 'users'
@@ -60,5 +61,31 @@ class Company(BaseModel):
         }
 
 
+
+class Invitation(BaseModel):
+    __tablename__ = "invitations"
+    id = Column(Integer, primary_key=True)
+
+    status = Column(Enum(PENDING="pending", REJECTED= "rejected", ACCEPTED="accepted"), nullable=False, default="pending")
+    # ... other columns ...
+
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user = relationship("User", back_populates="invitations")
+
+    company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
+    company = relationship("Company", back_populates="invitations")
+
+
+
+class Request(BaseModel):
+    __tablename__ = "requests"
+    id = Column(Integer, primary_key=True)
+
+    status = Column(Enum(PENDING="pending", REJECTED="rejected", ACCEPTED="accepted"), nullable=False,
+                    default="pending")
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user = relationship("User", back_populates="invitations")
+    company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
+    company = relationship("Company", back_populates="invitations")
 
 

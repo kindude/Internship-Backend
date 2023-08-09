@@ -9,7 +9,8 @@ from sqlalchemy import select, delete, desc
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, select
-from models.Models import User
+from models.Models import User, Invitation
+from schemas.Invitation import InvitationResponse, InvitationReponseList
 from schemas.User import UserResponse, UsersListResponse, UserScheme, UserDeleteScheme, UserLogin, Token, \
     UserResponseNoPass
 from schemas.pasword_hashing import hash, hash_with_salt
@@ -194,3 +195,28 @@ class UserRepository:
         password = str(datetime.datetime.utcnow())
         pass_hashed = hash_with_salt(password=password)
         return pass_hashed
+
+    async def get_all_invitations(self, id: int) -> InvitationReponseList:
+        try:
+            async with self.async_session as session:
+                query = select(Invitation).filter(Invitation.user_id == id)
+                invitations = session.execute(query)
+                if invitations is None:
+                    return None
+                else:
+                    invitations_list = [self.invititaion_to_resposne(invite) for invite in invitations.scalars.all()]
+                    return invitations_list
+        except Exception as e:
+            print(f"An error occurred while creating the user: {e}")
+            raise e
+
+
+    def invititaion_to_resposne(self, invite:Invitation) -> InvitationResponse:
+        return InvitationResponse(
+            id = invite.id,
+            user_id = invite.user_id,
+            company_id = invite.company_id,
+            status= invite.status
+        )
+
+

@@ -104,6 +104,15 @@ async def user_login(request: UserLogin, db: AsyncSession = Depends(get_db)) -> 
     token = await user_repository.authenticate_user(request=request)
     return token.token
 
+@router_user.get("/users/request/all")
+async def get_all_invitations(db: AsyncSession = Depends(get_db), current_user:UserResponse = Depends(get_current_user)):
+        user_repository = UserRepository(database=db)
+        invites = user_repository.get_all_invitations(current_user.id)
+        if not invites:
+            raise HTTPException(status_code=404, detail="You have not invites")
+        return invites
+
+
 
 
 
