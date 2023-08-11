@@ -3,7 +3,7 @@
 from sqlalchemy import Column, Integer, String, Boolean, ARRAY, ForeignKey
 
 from sqlalchemy.orm import relationship
-
+from sqlalchemy import Table, Column, ForeignKey
 from models.BaseModel import BaseModel
 from sqlalchemy import Column, Integer, String, ForeignKey, Enum
 
@@ -19,6 +19,7 @@ class User(BaseModel):
     status = Column(Boolean, nullable=True)
     roles = Column(ARRAY(String))
     companies = relationship("Company", back_populates="owner")
+    invites = relationship("Action", back_populates="user", cascade="all, delete-orphan")
 
     def to_dict(self):
         return {
@@ -37,6 +38,13 @@ class User(BaseModel):
         return f"<User(id={self.id}, username={self.username}, email={self.email})>"
 
 
+user_company_association = Table(
+    "user_company_association",
+    BaseModel.metadata,
+    Column("user_id", Integer, ForeignKey("users.id")),
+    Column("company_id", Integer, ForeignKey("companies.id"))
+)
+
 class Company(BaseModel):
     __tablename__ = 'companies'
     id = Column(Integer, primary_key=True)
@@ -48,6 +56,8 @@ class Company(BaseModel):
     is_visible = Column(Boolean, default=True)
     owner_id = Column(Integer, ForeignKey('users.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
     owner = relationship('User', back_populates='companies')
+    requests = relationship("Action", back_populates="company", cascade="all, delete-orphan")
+    participants = relationship("User", secondary=user_company_association, back_populates="companies")
 
     def to_dict(self):
         return {
@@ -61,31 +71,16 @@ class Company(BaseModel):
         }
 
 
-
-class Invitation(BaseModel):
-    __tablename__ = "invitations"
+class Action(BaseModel):
+    __tablename__ = "actions"
     id = Column(Integer, primary_key=True)
-
-    status = Column(Enum(PENDING="pending", REJECTED= "rejected", ACCEPTED="accepted"), nullable=False, default="pending")
-    # ... other columns ...
-
+    status = Column(Enum("PENDING", "REJECTED", "ACCEPTED", "CANCELLED", name="action_status"), nullable=False, default="pending")
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    user = relationship("User", back_populates="invitations")
-
+    user = relationship("User", back_populates="invites")
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
-    company = relationship("Company", back_populates="invitations")
+    company = relationship("Company", back_populates="requests")
+    type = Column(Enum("REQUEST", "INVITE", name="action_type"), nullable=False)
 
 
-
-class Request(BaseModel):
-    __tablename__ = "requests"
-    id = Column(Integer, primary_key=True)
-
-    status = Column(Enum(PENDING="pending", REJECTED="rejected", ACCEPTED="accepted"), nullable=False,
-                    default="pending")
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    user = relationship("User", back_populates="invitations")
-    company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
-    company = relationship("Company", back_populates="invitations")
 
 

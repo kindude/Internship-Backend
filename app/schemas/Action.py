@@ -2,11 +2,13 @@ from typing import List, Union
 from pydantic import BaseModel, EmailStr
 
 
-class InvitationResponse(BaseModel):
+class ActionResponse(BaseModel):
     id: int
     user_id: int
     company_id: int
     status: str
+    type:str
 
-class InvitationReponseList(BaseModel):
-    invites: List[InvitationResponse]
+
+class ActionListResponse(BaseModel):
+    actions: List[ActionResponse]

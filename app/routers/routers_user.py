@@ -4,8 +4,10 @@ from fastapi import APIRouter, Depends, Query
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from repositories.action_repository import ActionRepository
 from repositories.company_repository import CompanyRepository
 from repositories.user_repository import UserRepository
+from schemas.Action import ActionListResponse
 from schemas.Company import CompanyResponse, CompanyScheme
 from schemas.User import UserScheme, UserResponse, UsersListResponse, UserDeleteScheme, UserLogin, UserResponseNoPass
 from db.get_db import get_db
@@ -104,13 +106,22 @@ async def user_login(request: UserLogin, db: AsyncSession = Depends(get_db)) -> 
     token = await user_repository.authenticate_user(request=request)
     return token.token
 
-@router_user.get("/users/request/all")
-async def get_all_invitations(db: AsyncSession = Depends(get_db), current_user:UserResponse = Depends(get_current_user)):
+@router_user.get("/users/invites/all", response_model=ActionListResponse)
+async def get_all_invitations(db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)) -> ActionListResponse:
         user_repository = UserRepository(database=db)
-        invites = user_repository.get_all_invitations(current_user.id)
+        invites = user_repository.get_all_invites(current_user.id)
         if not invites:
             raise HTTPException(status_code=404, detail="You have not invites")
         return invites
+
+
+@router_user.get("/users/requests/all", response_model=ActionListResponse)
+async def get_all_requests(db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)) -> ActionListResponse:
+    user_repository = UserRepository(database=db)
+    requests = user_repository.get_all_requests(current_user.id)
+    if not requests:
+        raise HTTPException(status_code=404, detail="You have not requests")
+    return requests
 
 
 

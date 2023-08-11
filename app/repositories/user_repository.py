@@ -9,8 +9,8 @@ from sqlalchemy import select, delete, desc
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, select
-from models.Models import User, Invitation
-from schemas.Invitation import InvitationResponse, InvitationReponseList
+from models.Models import User, Action
+from schemas.Action import  ActionResponse, ActionListResponse
 from schemas.User import UserResponse, UsersListResponse, UserScheme, UserDeleteScheme, UserLogin, Token, \
     UserResponseNoPass
 from schemas.pasword_hashing import hash, hash_with_salt
@@ -19,6 +19,14 @@ from utils.create_token import create_token
 logger = logging.getLogger(__name__)
 load_dotenv()
 
+
+def action_to_resposne(self, invite: Action) -> ActionResponse:
+    return ActionResponse(
+        id=invite.id,
+        user_id=invite.user_id,
+        company_id=invite.company_id,
+        status=invite.status
+    )
 
 class UserRepository:
 
@@ -196,27 +204,58 @@ class UserRepository:
         pass_hashed = hash_with_salt(password=password)
         return pass_hashed
 
-    async def get_all_invitations(self, id: int) -> InvitationReponseList:
+
+
+
+
+    async def leave_company(self, user_id: int) -> bool:
         try:
             async with self.async_session as session:
-                query = select(Invitation).filter(Invitation.user_id == id)
-                invitations = session.execute(query)
-                if invitations is None:
-                    return None
+                user = await session.get(User, user_id)
+
+                if user is not None:
+                    if user.company is not None:
+                        user.company = None
+                        await session.commit()
+                        logger.info(f"User {user.username} left the company")
+                        return True
+                    else:
+                        logger.warning(f"User {user.username} is not a member of any company")
+                        return False
                 else:
-                    invitations_list = [self.invititaion_to_resposne(invite) for invite in invitations.scalars.all()]
-                    return invitations_list
+                    logger.warning("User not found")
+                    return False
         except Exception as e:
-            print(f"An error occurred while creating the user: {e}")
+            print(f"An error occurred while leaving company: {e}")
             raise e
 
 
-    def invititaion_to_resposne(self, invite:Invitation) -> InvitationResponse:
-        return InvitationResponse(
-            id = invite.id,
-            user_id = invite.user_id,
-            company_id = invite.company_id,
-            status= invite.status
-        )
 
+    async def get_all_invites(self, user_id: int) -> ActionListResponse:
+        try:
+            with self.async_session as session:
+                query = select(Action).filter(Action.user_id == user_id and Action.type == "INVITE")
+                invites = await session.execute(query)
+                if invites is  None:
+                    return None
+                else:
+                    invites_list = [action_to_resposne(invite) for invite in invites.scalars.all()]
+                    return ActionListResponse(actions=invites_list)
+        except Exception as e:
+            print(f"An error occurred while getting invites: {e}")
+            raise e
+
+    async def get_all_requests(self, user_id: int) -> ActionListResponse:
+        try:
+            with self.async_session as session:
+                query = select(Action).filter(Action.user_id == user_id and Action.type == "REQUEST")
+                requests = await session.execute(query)
+                if requests is not None:
+                    return None
+                else:
+                    requests_list = [action_to_resposne(request) for request in requests.scalars.all()]
+                    return ActionListResponse(actions=requests_list)
+        except Exception as e:
+            print(f"An error occurred while creating the user: {e}")
+            raise e
 

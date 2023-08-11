@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from repositories.company_repository import CompanyRepository
+from schemas.Action import ActionResponse, ActionListResponse
 
 from schemas.Company import CompanyResponse, CompanyScheme, CompanyDeleteScheme, CompanyListResponse, CompanySchemeRequest
 from schemas.User import  UserResponse
@@ -66,3 +67,33 @@ async def get_company(id:int, db: AsyncSession = Depends(get_db)) -> CompanyResp
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
     return company
+
+
+@router_companies.get("/companies/{id}/invites/all", response_model=ActionListResponse)
+async def get_all_invitations(id: int, db: AsyncSession = Depends(get_db),
+                              current_user: UserResponse = Depends(get_current_user)) -> ActionListResponse:
+    company_repository = CompanyRepository(database=db)
+    company = await company_repository.get_company(id=id)
+    if company.owner_id == current_user.id:
+        invites = await company_repository.get_all_invites(company_id=company.id)
+        if not invites:
+            raise HTTPException(status_code=404, detail="You have not invites")
+        return invites
+    else:
+        raise HTTPException(status_code=403, detail="You can't interact with this company")
+
+@router_companies.get("/companies/{id}/requests/all", response_model=ActionListResponse)
+async def get_all_requests(id: int, db: AsyncSession = Depends(get_db),
+                           current_user: UserResponse = Depends(get_current_user)) -> ActionListResponse:
+    company_repository = CompanyRepository(database=db)
+    company = await company_repository.get_company(id=id)
+    if company.owner_id == current_user.id:
+        requests = await company_repository.get_all_requests(company_id=company.id)
+        if not requests:
+            raise HTTPException(status_code=404, detail="You have not requests")
+        return requests
+    else:
+        raise HTTPException(status_code=403, detail="You can't interact with this company")
+
+
+
