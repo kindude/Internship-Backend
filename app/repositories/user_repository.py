@@ -20,12 +20,25 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 
-def action_to_resposne(self, invite: Action) -> ActionResponse:
+def action_to_resposne( invite: Action) -> ActionResponse:
     return ActionResponse(
         id=invite.id,
         user_id=invite.user_id,
         company_id=invite.company_id,
         status=invite.status
+    )
+
+def user_to_response(user: User) -> UserResponse:
+    return UserResponse(
+        id=user.id,
+        username=user.username,
+        email=user.email,
+        city=user.city,
+        password=user.password,
+        country=user.country,
+        phone=user.phone,
+        status=user.status,
+        roles=user.roles
     )
 
 class UserRepository:
@@ -83,7 +96,7 @@ class UserRepository:
 
 
         users = await self.async_session.execute(query)
-        user_list = [self.user_to_response(user) for user in users.scalars().all()]
+        user_list = [user_to_response(user) for user in users.scalars().all()]
 
 
         total_pages = ceil(total_count / per_page)
@@ -91,18 +104,7 @@ class UserRepository:
         return UsersListResponse(users=user_list, per_page=per_page, page=page, total=total_count,
                                  total_pages=total_pages)
 
-    def user_to_response(self, user: User) -> UserResponse:
-        return UserResponse(
-            id=user.id,
-            username=user.username,
-            email=user.email,
-            city=user.city,
-            password=user.password,
-            country=user.country,
-            phone=user.phone,
-            status=user.status,
-            roles=user.roles
-        )
+
 
     async def del_user(self, id: int) -> UserDeleteScheme:
         try:

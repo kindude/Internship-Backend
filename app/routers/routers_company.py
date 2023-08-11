@@ -96,4 +96,11 @@ async def get_all_requests(id: int, db: AsyncSession = Depends(get_db),
         raise HTTPException(status_code=403, detail="You can't interact with this company")
 
 
-
+@router_companies.get("/companies/{company_id}/users")
+def get_users_in_company(company_id: int, db:AsyncSession = Depends(get_db), page: int = Query(1, alias="page"), per_page: int = Query(5)):
+    company_repository = CompanyRepository(database=db)
+    users_in_company = company_repository.get_users_in_company(company_id=company_id, page=page, per_page=per_page)
+    if users_in_company:
+        return users_in_company
+    else:
+        raise HTTPException(status_code=404, detail="No users in company found")

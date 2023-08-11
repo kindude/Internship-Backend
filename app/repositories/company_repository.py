@@ -11,11 +11,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, or_
 
 from models.Models import Company, User, Action
-from repositories.user_repository import action_to_resposne
+from repositories.user_repository import action_to_resposne, user_to_response
 from schemas.Action import ActionListResponse
 
 from schemas.Company import CompanyScheme, CompanyResponse, CompanyDeleteScheme, CompanyListResponse, \
     CompanySchemeRequest
+from schemas.User import UsersListResponse
 
 logger = logging.getLogger(__name__)
 load_dotenv()
@@ -193,3 +194,26 @@ class CompanyRepository:
             print(f"An error occurred while getting invites: {e}")
             raise e
 
+    async def get_users_in_company(self, company_id: int, per_page: int, page: int) -> UsersListResponse:
+        try:
+            with self.async_session as session:
+                company = await session.query(Company).get(company_id)
+                if company is None:
+                    return None
+
+                users = company.participants
+                total_users = users.count()
+                total_pages = (total_users + per_page - 1) // per_page
+
+                start_index = (page - 1) * per_page
+                end_index = page * per_page
+
+                user_list = [user_to_response(user) for user in
+                             users.order_by(User.id).slice(start_index, end_index).scalars().all()]
+
+                return UsersListResponse(users=user_list, per_page=per_page, page=page, total=total_users,
+                                         total_pages=total_pages)
+
+        except Exception as e:
+            print(f"An error occurred while getting users in company: {e}")
+            raise e
