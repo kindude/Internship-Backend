@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 
-def action_to_resposne( invite: Action) -> ActionResponse:
+def action_to_resposne(invite: Action) -> ActionResponse:
     return ActionResponse(
         id=invite.id,
         user_id=invite.user_id,
@@ -210,54 +210,5 @@ class UserRepository:
 
 
 
-    async def leave_company(self, user_id: int) -> bool:
-        try:
-            async with self.async_session as session:
-                user = await session.get(User, user_id)
 
-                if user is not None:
-                    if user.company is not None:
-                        user.company = None
-                        await session.commit()
-                        logger.info(f"User {user.username} left the company")
-                        return True
-                    else:
-                        logger.warning(f"User {user.username} is not a member of any company")
-                        return False
-                else:
-                    logger.warning("User not found")
-                    return False
-        except Exception as e:
-            print(f"An error occurred while leaving company: {e}")
-            raise e
-
-
-
-    async def get_all_invites(self, user_id: int) -> ActionListResponse:
-        try:
-            with self.async_session as session:
-                query = select(Action).filter(Action.user_id == user_id and Action.type == "INVITE")
-                invites = await session.execute(query)
-                if invites is  None:
-                    return None
-                else:
-                    invites_list = [action_to_resposne(invite) for invite in invites.scalars.all()]
-                    return ActionListResponse(actions=invites_list)
-        except Exception as e:
-            print(f"An error occurred while getting invites: {e}")
-            raise e
-
-    async def get_all_requests(self, user_id: int) -> ActionListResponse:
-        try:
-            with self.async_session as session:
-                query = select(Action).filter(Action.user_id == user_id and Action.type == "REQUEST")
-                requests = await session.execute(query)
-                if requests is not None:
-                    return None
-                else:
-                    requests_list = [action_to_resposne(request) for request in requests.scalars.all()]
-                    return ActionListResponse(actions=requests_list)
-        except Exception as e:
-            print(f"An error occurred while creating the user: {e}")
-            raise e
 

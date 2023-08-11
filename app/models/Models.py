@@ -38,12 +38,6 @@ class User(BaseModel):
         return f"<User(id={self.id}, username={self.username}, email={self.email})>"
 
 
-user_company_association = Table(
-    "user_company_association",
-    BaseModel.metadata,
-    Column("user_id", Integer, ForeignKey("users.id")),
-    Column("company_id", Integer, ForeignKey("companies.id"))
-)
 
 class Company(BaseModel):
     __tablename__ = 'companies'
@@ -57,7 +51,6 @@ class Company(BaseModel):
     owner_id = Column(Integer, ForeignKey('users.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
     owner = relationship('User', back_populates='companies')
     requests = relationship("Action", back_populates="company", cascade="all, delete-orphan")
-    participants = relationship("User", secondary=user_company_association, back_populates="companies")
 
     def to_dict(self):
         return {
@@ -79,7 +72,7 @@ class Action(BaseModel):
     user = relationship("User", back_populates="invites")
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     company = relationship("Company", back_populates="requests")
-    type = Column(Enum("REQUEST", "INVITE", name="action_type"), nullable=False)
+    type = Column(Enum("REQUEST", "INVITE", "MEMBER", name="action_type"), nullable=False)
 
 
 

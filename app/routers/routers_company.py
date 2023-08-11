@@ -69,38 +69,4 @@ async def get_company(id:int, db: AsyncSession = Depends(get_db)) -> CompanyResp
     return company
 
 
-@router_companies.get("/companies/{id}/invites/all", response_model=ActionListResponse)
-async def get_all_invitations(id: int, db: AsyncSession = Depends(get_db),
-                              current_user: UserResponse = Depends(get_current_user)) -> ActionListResponse:
-    company_repository = CompanyRepository(database=db)
-    company = await company_repository.get_company(id=id)
-    if company.owner_id == current_user.id:
-        invites = await company_repository.get_all_invites(company_id=company.id)
-        if not invites:
-            raise HTTPException(status_code=404, detail="You have not invites")
-        return invites
-    else:
-        raise HTTPException(status_code=403, detail="You can't interact with this company")
 
-@router_companies.get("/companies/{id}/requests/all", response_model=ActionListResponse)
-async def get_all_requests(id: int, db: AsyncSession = Depends(get_db),
-                           current_user: UserResponse = Depends(get_current_user)) -> ActionListResponse:
-    company_repository = CompanyRepository(database=db)
-    company = await company_repository.get_company(id=id)
-    if company.owner_id == current_user.id:
-        requests = await company_repository.get_all_requests(company_id=company.id)
-        if not requests:
-            raise HTTPException(status_code=404, detail="You have not requests")
-        return requests
-    else:
-        raise HTTPException(status_code=403, detail="You can't interact with this company")
-
-
-@router_companies.get("/companies/{company_id}/users")
-def get_users_in_company(company_id: int, db:AsyncSession = Depends(get_db), page: int = Query(1, alias="page"), per_page: int = Query(5)):
-    company_repository = CompanyRepository(database=db)
-    users_in_company = company_repository.get_users_in_company(company_id=company_id, page=page, per_page=per_page)
-    if users_in_company:
-        return users_in_company
-    else:
-        raise HTTPException(status_code=404, detail="No users in company found")
