@@ -72,7 +72,18 @@ class Action(BaseModel):
     user = relationship("User", back_populates="invites")
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     company = relationship("Company", back_populates="requests")
-    type = Column(Enum("REQUEST", "INVITE", "MEMBER", name="action_type"), nullable=False)
+    type_of_action = Column(Enum("REQUEST", "INVITE", "MEMBER", name="type_of_action"), nullable=False)
+
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'status': self.status,
+            'user_id': self.user_id,
+            'company_id': self.company_id,
+            'type': self.type,
+
+        }
 
 
 

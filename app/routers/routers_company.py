@@ -14,7 +14,7 @@ from utils.auth import get_current_user
 router_companies = APIRouter()
 
 
-@router_companies.post("/companies/create", response_model=CompanyResponse)
+@router_companies.post("/companies/create", response_model=CompanyResponse, tags=["Company"])
 async def create_company(request: CompanySchemeRequest, db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)) -> CompanyResponse:
     company_repository = CompanyRepository(database=db)
     request_ = CompanyScheme(
@@ -33,7 +33,7 @@ async def create_company(request: CompanySchemeRequest, db: AsyncSession = Depen
     return company
 
 
-@router_companies.put("/companies/update/{id}", response_model=CompanyResponse)
+@router_companies.put("/companies/update/{id}", response_model=CompanyResponse, tags=["Company"])
 async def update_company(id: int, request: CompanyScheme, db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)) -> CompanyResponse:
     company_repository = CompanyRepository(database=db)
     if current_user.id != request.owner_id:
@@ -42,7 +42,7 @@ async def update_company(id: int, request: CompanyScheme, db: AsyncSession = Dep
     return company_updated
 
 
-@router_companies.post("/companies/{id}", response_model=CompanyDeleteScheme)
+@router_companies.post("/companies/{id}", response_model=CompanyDeleteScheme, tags=["Company"])
 async def delete_company(id: int, request: CompanyScheme, db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)) -> CompanyDeleteScheme:
     company_repository = CompanyRepository(database=db)
     print(current_user.id)
@@ -53,14 +53,14 @@ async def delete_company(id: int, request: CompanyScheme, db: AsyncSession = Dep
     return company_deleted
 
 
-@router_companies.get("/companies/all", response_model=CompanyListResponse)
+@router_companies.get("/companies/all", response_model=CompanyListResponse, tags=["Company"])
 async def get_all_companies(page: int = Query(1, alias="page"), per_page: int = Query(5), db: AsyncSession = Depends(get_db), current_user:UserResponse = Depends(get_current_user)) -> CompanyListResponse:
     company_repository = CompanyRepository(database=db)
     response = await company_repository.get_companies(page=page, per_page=per_page, current_user_id=current_user.id)
     return response
 
 
-@router_companies.get("/companies/{id}", response_model=CompanyResponse)
+@router_companies.get("/companies/{id}", response_model=CompanyResponse, tags=["Company"])
 async def get_company(id:int, db: AsyncSession = Depends(get_db)) -> CompanyResponse:
     company_repository = CompanyRepository(database=db)
     company = await company_repository.get_company(id=id)

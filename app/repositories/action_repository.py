@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
 from models.Models import User, Action, Company
 from repositories.user_repository import action_to_resposne, user_to_response
-from schemas.Action import ActionResponse, ActionListResponse
+from schemas.Action import ActionResponse, ActionListResponse, ActionScheme
 from schemas.User import UsersListResponse
 
 logger = logging.getLogger(__name__)
@@ -84,7 +84,7 @@ class ActionRepository:
         try:
             async with self.async_session as session:
                 request = Action(**request_.dict())
-                session.add(request.dict())
+                session.add(request)
                 await session.commit()
                 logger.info(f"New request created")
                 return request
@@ -106,20 +106,14 @@ class ActionRepository:
             print(f"An error occured while cancelling the request: {e}")
             raise e
 
-    async def accept_request(self, request_:ActionResponse) -> Action:
+    async def accept_request(self, request_: ActionScheme) -> Action:
         try:
-            with self.async_session as session:
+            async with self.async_session as session:
                 request = await session.get(Action, request_.id)
                 if request and request.status == "PENDING":
                     request.status = "ACCEPTED"
+                    request.type_of_action= "MEMBER"
                     await session.commit()
-
-                    user = await session.get(User, request.user_id)
-                    company = await session.get(Company, request.company_id)
-                    if user is not None and company is not None:
-                        company.participants.append(user)
-                        await session.commit()
-
                     logger.info(f"Invite accepted and user joined the company")
                     return request
 
@@ -163,29 +157,30 @@ class ActionRepository:
             print(f"An error occurred while leaving company: {e}")
             raise e
 
-    async def get_all_invites(self, user_id: int) -> ActionListResponse:
+    async def get_all_invites_user(self, user_id: int) -> ActionListResponse:
         try:
-            with self.async_session as session:
+            async with self.async_session as session:
                 query = select(Action).filter(Action.user_id == user_id and Action.type == "INVITE")
                 invites = await session.execute(query)
                 if invites is None:
                     return None
                 else:
-                    invites_list = [action_to_resposne(invite) for invite in invites.scalars.all()]
+                    invites_list = [action_to_resposne(invite) for invite in invites.scalars().all()]
                     return ActionListResponse(actions=invites_list)
         except Exception as e:
             print(f"An error occurred while getting invites: {e}")
             raise e
 
-    async def get_all_requests(self, user_id: int) -> ActionListResponse:
+    async def get_all_requests_user(self, user_id: int) -> ActionListResponse:
         try:
-            with self.async_session as session:
+           async with self.async_session as session:
                 query = select(Action).filter(Action.user_id == user_id and Action.type == "REQUEST")
                 requests = await session.execute(query)
-                if requests is not None:
+                print(requests)
+                if requests is None:
                     return None
                 else:
-                    requests_list = [action_to_resposne(request) for request in requests.scalars.all()]
+                    requests_list = [action_to_resposne(request) for request in requests.scalars().all()]
                     return ActionListResponse(actions=requests_list)
         except Exception as e:
             print(f"An error occurred while creating the user: {e}")
@@ -213,9 +208,9 @@ class ActionRepository:
             print(f"An error occurred while removing user from company: {e}")
             raise e
 
-    async def get_all_invites(self, company_id:int) -> ActionListResponse:
+    async def get_all_invites_company(self, company_id:int) -> ActionListResponse:
         try:
-            with self.async_session as session:
+            async with self.async_session as session:
                 query = select(Action).filter(Action.company_id == company_id and Action.type == "INVITE")
                 invites = await session.execute(query)
                 if invites is  None:
@@ -228,16 +223,16 @@ class ActionRepository:
             print(f"An error occurred while getting invites: {e}")
             raise e
 
-    async def get_all_requests(self, company_id:int) -> ActionListResponse:
+    async def get_all_requests_company(self, company_id: int) -> ActionListResponse:
         try:
-            with self.async_session as session:
+            async with self.async_session as session:
                 query = select(Action).filter(Action.company_id == company_id and Action.type == "REQUEST")
                 requests = await session.execute(query)
                 if requests is None:
                     return None
 
                 else:
-                    requests_list = [action_to_resposne(request) for request in requests.scalars.all()]
+                    requests_list = [action_to_resposne(request) for request in requests.scalars().all()]
                     return ActionListResponse(actions=requests_list)
         except Exception as e:
             print(f"An error occurred while getting invites: {e}")
@@ -245,17 +240,20 @@ class ActionRepository:
 
     async def get_users_in_company(self, company_id: int, per_page: int, page: int) -> UsersListResponse:
         try:
-            with self.async_session as session:
-                total_users = session.query(func.count(User.id)).join(Action).filter(
+            async with self.async_session as session:
+                stmt = select(func.count(User.id)).join(Action).filter(
                     (Action.type == "MEMBER") & (Action.user_id == User.id) & (Action.company_id == company_id)
-                ).scalar()
+                )
+                total_users_result = await session.execute(stmt)
+                total_users = total_users_result.scalar()
+
                 total_pages = (total_users + per_page - 1) // per_page
 
-                query = select(User).join(Action).where(
+                stmt = select(User).join(Action).where(
                     (Action.type == "MEMBER") & (Action.user_id == User.id) & (Action.company_id == company_id)
                 ).offset((page - 1) * per_page).limit(per_page)
 
-                user_list = await session.execute(query)
+                user_list = await session.execute(stmt)
 
                 user_list_response = [user_to_response(user) for user in user_list.scalars().all()]
 
@@ -265,6 +263,7 @@ class ActionRepository:
         except Exception as e:
             print(f"An error occurred while getting users in company: {e}")
             raise e
+
 
 
     

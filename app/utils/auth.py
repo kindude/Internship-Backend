@@ -3,7 +3,7 @@ import os
 from http.client import HTTPException
 
 import jwt
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ENV import SECRET_KEY, CLIENT_SECRET, ALGORITHM, API_AUDIENCE, ALGORITHM_AUTH0
@@ -54,11 +54,13 @@ def get_user_email_by_token(request: Token) -> str:
             raise HTTPException(status_code=401, detail="Invalid token")
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
-def get_token(token: str = Depends(oauth2_scheme)) -> str:
-    return token
+security = HTTPBearer()
+
+def get_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
+    return credentials.credentials
 
 
 async def get_current_user(token: str = Depends(get_token), db: AsyncSession = Depends(get_db)) -> UserResponse:

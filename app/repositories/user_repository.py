@@ -13,7 +13,7 @@ from models.Models import User, Action
 from schemas.Action import  ActionResponse, ActionListResponse
 from schemas.User import UserResponse, UsersListResponse, UserScheme, UserDeleteScheme, UserLogin, Token, \
     UserResponseNoPass
-from schemas.pasword_hashing import hash, hash_with_salt
+from schemas.pasword_hashing import hash_with_salt
 from utils.create_token import create_token
 
 logger = logging.getLogger(__name__)
@@ -22,10 +22,10 @@ load_dotenv()
 
 def action_to_resposne(invite: Action) -> ActionResponse:
     return ActionResponse(
-        id=invite.id,
         user_id=invite.user_id,
         company_id=invite.company_id,
-        status=invite.status
+        status=invite.status,
+        type_of_action=invite.type
     )
 
 def user_to_response(user: User) -> UserResponse:
@@ -49,6 +49,8 @@ class UserRepository:
     async def authenticate_user(self, request: UserLogin) -> Token:
         try:
             user = await self.get_user_by_email(email=request.email)
+            print(user)
+            print(request.password)
             hashed_request_password = hash_with_salt(request.password)
             print(hashed_request_password)
             print(user.password)
