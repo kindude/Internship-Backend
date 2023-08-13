@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, select
 from models.Models import User, Action
-from schemas.Action import  ActionResponse, ActionListResponse
+from schemas.Action import ActionResponse, ActionListResponse, ActionScheme
 from schemas.User import UserResponse, UsersListResponse, UserScheme, UserDeleteScheme, UserLogin, Token, \
     UserResponseNoPass
 from schemas.pasword_hashing import hash_with_salt
@@ -20,12 +20,21 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 
-def action_to_resposne(invite: Action) -> ActionResponse:
+def action_to_resposne(action: Action) -> ActionResponse:
     return ActionResponse(
-        user_id=invite.user_id,
-        company_id=invite.company_id,
-        status=invite.status,
-        type_of_action=invite.type
+        user_id=action.user_id,
+        company_id=action.company_id,
+        status=action.status,
+        type_of_action=action.type_of_action
+    )
+
+def action_to_scheme(action: Action) -> ActionScheme:
+    return ActionScheme(
+        id=action.id,
+        user_id=action.user_id,
+        company_id=action.company_id,
+        status=action.status,
+        type_of_action=action.type_of_action
     )
 
 def user_to_response(user: User) -> UserResponse:
