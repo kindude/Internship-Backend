@@ -58,11 +58,7 @@ class UserRepository:
     async def authenticate_user(self, request: UserLogin) -> Token:
         try:
             user = await self.get_user_by_email(email=request.email)
-            print(user)
-            print(request.password)
             hashed_request_password = hash_with_salt(request.password)
-            print(hashed_request_password)
-            print(user.password)
             if hashed_request_password == user.password:
                 token = create_token(user)
                 return Token(
