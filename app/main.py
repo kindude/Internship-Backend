@@ -1,9 +1,14 @@
+from typing import Annotated
+
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
+from fastapi.security import OAuth2PasswordRequestForm
+
 from ENV import host, port
 from fastapi.middleware.cors import CORSMiddleware
+from  routers.routers_company import router_companies
+from routers.routers_action import router_action
 from routers.routers_user import router_user
-from routers.routers_company import router_companies
 
 app = FastAPI()
 
@@ -18,8 +23,12 @@ app.add_middleware(
     expose_headers=["Content-Disposition"]
 )
 
-app.include_router(router_user)
+
 app.include_router(router_companies)
+app.include_router(router_user)
+app.include_router(router_action)
+
+
 
 @app.api_route('/', methods=['GET', 'DELETE'])
 def main():
@@ -28,6 +37,7 @@ def main():
         "detail": "ok",
         "result": "working"
     }
+
 
 if __name__ == '__main__':
     uvicorn.run("main:app", host=host, port=port, reload=True)

@@ -9,14 +9,46 @@ from sqlalchemy import select, delete, desc
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, select
-from models.Models import User
-from schemas.User import UserResponse, UsersListResponse, UserScheme, UserDeleteScheme, UserLogin, Token
-from schemas.pasword_hashing import hash, hash_with_salt
+from models.Models import User, Action
+from schemas.Action import ActionResponse, ActionListResponse, ActionScheme
+from schemas.User import UserResponse, UsersListResponse, UserScheme, UserDeleteScheme, UserLogin, Token, \
+    UserResponseNoPass
+from schemas.pasword_hashing import hash_with_salt
 from utils.create_token import create_token
 
 logger = logging.getLogger(__name__)
 load_dotenv()
 
+
+def action_to_resposne(action: Action) -> ActionResponse:
+    return ActionResponse(
+        user_id=action.user_id,
+        company_id=action.company_id,
+        status=action.status,
+        type_of_action=action.type_of_action
+    )
+
+def action_to_scheme(action: Action) -> ActionScheme:
+    return ActionScheme(
+        id=action.id,
+        user_id=action.user_id,
+        company_id=action.company_id,
+        status=action.status,
+        type_of_action=action.type_of_action
+    )
+
+def user_to_response(user: User) -> UserResponse:
+    return UserResponse(
+        id=user.id,
+        username=user.username,
+        email=user.email,
+        city=user.city,
+        password=user.password,
+        country=user.country,
+        phone=user.phone,
+        status=user.status,
+        roles=user.roles
+    )
 
 class UserRepository:
 
@@ -26,7 +58,11 @@ class UserRepository:
     async def authenticate_user(self, request: UserLogin) -> Token:
         try:
             user = await self.get_user_by_email(email=request.email)
+            print(user)
+            print(request.password)
             hashed_request_password = hash_with_salt(request.password)
+            print(hashed_request_password)
+            print(user.password)
             if hashed_request_password == user.password:
                 token = create_token(user)
                 return Token(
@@ -53,7 +89,7 @@ class UserRepository:
             print(f"An error occurred while creating the user: {e}")
             raise e
 
-    async def get_user(self, id: int) -> UserResponse:
+    async def get_user(self, id: int) -> UserResponseNoPass:
         async with self.async_session as session:
             query = select(User).filter(User.id == id)
             result = await session.execute(query)
@@ -63,35 +99,23 @@ class UserRepository:
             return user
 
     async def get_users(self, page: int, per_page: int) -> UsersListResponse:
-        # Calculate the total count of users in the database
+
         total_count = await self.async_session.scalar(select(func.count()).select_from(User))
 
-        # Calculate the offset and apply pagination to the query
         offset = (page - 1) * per_page
         query = select(User).slice(offset, offset + per_page)
 
-        # Execute the query and get the users for the current page
-        users = await self.async_session.execute(query)
-        user_list = [self.user_to_response(user) for user in users.scalars().all()]
 
-        # Calculate the total pages based on the total count and per_page value
+        users = await self.async_session.execute(query)
+        user_list = [user_to_response(user) for user in users.scalars().all()]
+
+
         total_pages = ceil(total_count / per_page)
 
         return UsersListResponse(users=user_list, per_page=per_page, page=page, total=total_count,
                                  total_pages=total_pages)
 
-    def user_to_response(self, user: User) -> UserResponse:
-        return UserResponse(
-            id=user.id,
-            username=user.username,
-            email=user.email,
-            city=user.city,
-            password=user.password,
-            country=user.country,
-            phone=user.phone,
-            status=user.status,
-            roles=user.roles
-        )
+
 
     async def del_user(self, id: int) -> UserDeleteScheme:
         try:
@@ -192,3 +216,10 @@ class UserRepository:
         password = str(datetime.datetime.utcnow())
         pass_hashed = hash_with_salt(password=password)
         return pass_hashed
+
+
+
+
+
+
+

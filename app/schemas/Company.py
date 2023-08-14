@@ -23,6 +23,10 @@ class CompanyResponse(CompanyScheme):
 
 class CompanyListResponse(BaseModel):
     companies: List[CompanyResponse]
+    per_page: int
+    page: int
+    total: int
+    total_pages: int
 
 
 class CompanyDeleteScheme(BaseModel):
