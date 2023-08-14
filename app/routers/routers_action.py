@@ -8,9 +8,10 @@ from db.get_db import get_db
 
 from repositories.action_repository import ActionRepository
 from repositories.company_repository import CompanyRepository
+from repositories.user_repository import UserRepository
 
 from schemas.Action import ActionListResponse, ActionResponse, ActionScheme
-from schemas.User import UserResponse
+from schemas.User import UserResponse, UserResponseNoPass, UsersListResponse
 from utils.auth import get_current_user
 
 logger = logging.getLogger(__name__)
@@ -190,3 +191,43 @@ async def get_users_in_company(company_id: int, db: AsyncSession = Depends(get_d
     else:
         raise HTTPException(status_code=404, detail="No users in company found")
 
+@router_action.put("/companies/{company_id}/add_admin/{user_id}", response_model=UserResponseNoPass, tags=["Admin"])
+async def toggle_admin_role(company_id:int, user_id:int, current_user: UserResponse = Depends(get_current_user), db:AsyncSession = Depends(get_db)) -> UserResponseNoPass:
+    action_repository = ActionRepository(database=db)
+    company_repository = CompanyRepository(database=db)
+    company = await company_repository.get_company(id=company_id)
+    if company.owner_id == current_user.id:
+        user_admin = await action_repository.add_admin(user_id=user_id, company_id=company_id)
+        if not user_admin:
+            raise HTTPException(status_code=404, detail="Something went wrong during adding an admin")
+        return user_admin
+    else:
+        raise HTTPException(status_code=403, detail="You cannot assign admins for this company")
+
+@router_action.put("/companies/{company_id}/remove_admin/{user_id}", response_model=UserResponseNoPass, tags=["Admin"])
+async def remove_admin_role(company_id:int, user_id:int, current_user: UserResponse = Depends(get_current_user), db:AsyncSession = Depends(get_db)) -> UserResponseNoPass:
+    action_repository = ActionRepository(database=db)
+    company_repository = CompanyRepository(database=db)
+    company = await company_repository.get_company(id=company_id)
+    if company.owner_id == current_user.id:
+        user_admin = await action_repository.remove_admin(id=user_id)
+        if not user_admin:
+            raise HTTPException(status_code=404, detail="Something went wrong during removing an admin")
+        return user_admin
+    else:
+        raise HTTPException(status_code=403, detail="You cannot remove admins for this company")
+
+
+@router_action.get("/companies/{company_id}/admins/all", response_model=UsersListResponse, tags=["Admin"])
+async def get_all_admins(company_id:int, current_user:UserResponse=Depends(get_current_user), db:AsyncSession = Depends(get_db),
+                         page: int = Query(1, alias="page"), per_page: int = Query(10)) -> UsersListResponse:
+    action_repository = ActionRepository(database=db)
+    company_repository = CompanyRepository(database=db)
+    company = await company_repository.get_company(id=company_id)
+    if company.owner_id == current_user.id:
+        admins = await action_repository.get_all_admins(company_id=company_id,per_page=per_page, page=page)
+        if not admins:
+            raise HTTPException(status_code=404, detail="Admins for this company not found")
+        return admins
+    else:
+        raise HTTPException(status_code=403, detail="You are not allowed to interact with this company")

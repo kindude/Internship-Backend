@@ -2,9 +2,11 @@ from __future__ import annotations
 
 
 import logging
+from math import ceil
 
 from dotenv import load_dotenv
 from sqlalchemy import select, func, and_
+from sqlalchemy.sql import update
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -12,7 +14,7 @@ from sqlalchemy.orm import selectinload
 from models.Models import User, Action, Company
 from repositories.user_repository import action_to_resposne, user_to_response, action_to_scheme
 from schemas.Action import ActionResponse, ActionListResponse, ActionScheme
-from schemas.User import UsersListResponse
+from schemas.User import UsersListResponse, UserResponseNoPass
 
 logger = logging.getLogger(__name__)
 load_dotenv()
@@ -265,6 +267,82 @@ class ActionRepository:
             print(f"An error occurred while getting users in company: {e}")
             raise e
 
+    async def if_member(self, user_id:int, company_id:int) -> bool:
+        try:
+            async with self.async_session as session:
+                query = select(User).join(Action).where(
+                    (Action.type_of_action == "MEMBER") & (Action.user_id == user_id) & (Action.company_id == company_id)
+                )
+                user = await session.execute(query)
+                user = user.scalar_one_or_none()
+                return user
+        except Exception as e:
+            print(f"An error occurred while getting users in company: {e}")
+            raise e
 
 
-    
+    async def add_admin(self, user_id:int, company_id:int) -> UserResponseNoPass:
+        try:
+            async with self.async_session as session:
+                user = await session.get(User, user_id)
+                if await self.if_member(user_id, company_id):
+                    if user:
+                        if "ADMIN" not in user.roles:
+                            user.roles.append("ADMIN")
+                            updated_roles = user.roles.copy()
+                            stmt = update(User).where(User.id == user_id).values(roles=updated_roles)
+                            await session.execute(stmt)
+                            await session.commit()
+                            return user
+        except Exception as e:
+            print(f"An error occurred while getting users in company: {e}")
+            raise e
+
+    async def remove_admin(self, id: int) -> UserResponseNoPass:
+        try:
+            async with self.async_session as session:
+                user = await session.get(User, id)
+                if user:
+                    if "ADMIN" in user.roles:
+                        user.roles.remove("ADMIN")
+                        updated_roles = user.roles.copy()
+                        stmt = update(User).where(User.id == id).values(roles=updated_roles)
+                        await session.execute(stmt)
+                        await session.commit()
+                        return user
+        except Exception as e:
+            print(f"An error occurred while removing admin role: {e}")
+            raise e
+
+    async def get_all_admins(self, company_id: int, per_page: int, page: int) -> UsersListResponse:
+        try:
+            async with self.async_session as session:
+                stmt = (
+                    select(User)
+                    .join(Action)
+                    .where((Action.company_id == company_id) & (User.roles.op('@>')(["ADMIN"])))
+                    .distinct()
+                )
+
+                result = await session.execute(stmt)
+                user_list = result.scalars().all()
+
+                total_users = len(user_list)
+                total_pages = ceil(total_users / per_page)
+
+                start_index = (page - 1) * per_page
+                end_index = start_index + per_page
+                users_on_page = user_list[start_index:end_index]
+
+                user_list_response = [user_to_response(user) for user in users_on_page]
+                return UsersListResponse(
+                    users=user_list_response,
+                    per_page=per_page,
+                    page=page,
+                    total=total_users,
+                    total_pages=total_pages
+                )
+        except Exception as e:
+            print(f"An error occurred while getting all admins: {e}")
+            raise e
+
