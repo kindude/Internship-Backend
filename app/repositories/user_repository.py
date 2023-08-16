@@ -9,7 +9,7 @@ from sqlalchemy import select, delete, desc
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, select
-from models.Models import User, Action
+from models.Models import User, Action, Company
 from schemas.Action import ActionResponse, ActionListResponse, ActionScheme
 from schemas.User import UserResponse, UsersListResponse, UserScheme, UserDeleteScheme, UserLogin, Token, \
     UserResponseNoPass
@@ -212,7 +212,6 @@ class UserRepository:
         password = str(datetime.datetime.utcnow())
         pass_hashed = hash_with_salt(password=password)
         return pass_hashed
-
 
 
 

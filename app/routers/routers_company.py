@@ -3,7 +3,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from repositories.company_repository import CompanyRepository
-from schemas.Action import ActionResponse, ActionListResponse
 
 from schemas.Company import CompanyResponse, CompanyScheme, CompanyDeleteScheme, CompanyListResponse, CompanySchemeRequest
 from schemas.User import  UserResponse
@@ -67,6 +66,13 @@ async def get_company(id:int, db: AsyncSession = Depends(get_db)) -> CompanyResp
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
     return company
+
+@router_companies.get("/companies/my/companies", response_model=CompanyListResponse, tags=["Company"])
+async def get_my_companies(page: int = Query(1, alias="page"), per_page: int = Query(5), db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)) -> CompanyListResponse:
+    company_repository = CompanyRepository(database=db)
+    response = await company_repository.get_my_companies(page=page, per_page=per_page, current_user_id=current_user.id)
+    return response
+
 
 
 

@@ -3,8 +3,8 @@
 from sqlalchemy import Column, Integer, String, Boolean, ARRAY, ForeignKey
 
 from sqlalchemy.orm import relationship
-from sqlalchemy import Table, Column, ForeignKey
-from models.BaseModel import BaseModel
+
+from app.models.BaseModel import BaseModel
 from sqlalchemy import Column, Integer, String, ForeignKey, Enum
 
 class User(BaseModel):
@@ -85,6 +85,30 @@ class Action(BaseModel):
 
         }
 
+class Quiz(BaseModel):
+    __tablename__ = "quizzes"
 
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, index=True, nullable=False)
+    description = Column(String, nullable=False)
+    frequency = Column(Integer, nullable=False)
+    company_id = Column(Integer, ForeignKey("companies.id"))
+    questions = relationship("Question", back_populates="quiz")
+
+class Question(BaseModel):
+    __tablename__ = "questions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    text = Column(String, nullable=False)
+    quiz_id = Column(Integer, ForeignKey("quizzes.id"))
+    options = relationship("Option", back_populates="question")
+
+class Option(BaseModel):
+    __tablename__ = "options"
+
+    id = Column(Integer, primary_key=True, index=True)
+    text = Column(String, nullable=False)
+    question_id = Column(Integer, ForeignKey("questions.id"))
+    is_correct = Column(Boolean, default=False)
 
 

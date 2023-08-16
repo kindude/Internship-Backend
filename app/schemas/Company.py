@@ -13,6 +13,7 @@ class CompanySchemeRequest(BaseModel):
     is_visible: bool
 
 
+
 class CompanyScheme(CompanySchemeRequest):
     owner_id: int
 
