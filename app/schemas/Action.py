@@ -12,4 +12,4 @@ class ActionResponse(BaseModel):
 class ActionScheme(ActionResponse):
     id:int
 class ActionListResponse(BaseModel):
-    actions: List[ActionResponse]
+    actions: List[ActionScheme]

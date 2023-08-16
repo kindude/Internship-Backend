@@ -220,7 +220,7 @@ class ActionRepository:
                     return None
 
                 else:
-                    invites_list = [action_to_resposne(invite) for invite in invites.scalars().all()]
+                    invites_list = [action_to_scheme(invite) for invite in invites.scalars().all()]
                     return ActionListResponse(actions=invites_list)
         except Exception as e:
             print(f"An error occurred while getting invites: {e}")

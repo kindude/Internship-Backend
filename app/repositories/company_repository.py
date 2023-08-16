@@ -143,3 +143,25 @@ class CompanyRepository:
             print(f"An error occured while updating company: {e}")
 
 
+    async def get_my_companies(self, page: int, per_page: int, current_user_id: int) -> CompanyListResponse:
+        try:
+            async with self.async_session as session:
+                offset = (page - 1) * per_page
+
+                query = select(Company).where(
+                    or_(
+                        Company.owner_id == current_user_id
+                    )
+                ).order_by(Company.id).offset(offset)
+
+                companies = await session.execute(query)
+
+                company_list = [self.company_to_response(company) for company in companies.scalars().all()]
+                total_count = len(company_list)
+                total_pages = ceil(total_count / per_page)
+                return CompanyListResponse(companies=company_list, per_page=per_page, page=page, total=total_count,
+                                           total_pages=total_pages)
+
+        except Exception as e:
+            print(f"An error occurred while deleting user: {e}")
+
