@@ -14,6 +14,7 @@ from sqlalchemy.orm import selectinload
 from models.Models import User, Action, Company
 from repositories.user_repository import action_to_resposne, user_to_response, action_to_scheme
 from schemas.Action import ActionResponse, ActionListResponse, ActionScheme
+from schemas.Company import CompanyListResponse, CompanyResponse
 from schemas.User import UsersListResponse, UserResponseNoPass
 
 logger = logging.getLogger(__name__)
@@ -172,6 +173,35 @@ class ActionRepository:
             print(f"An error occurred while getting invites: {e}")
             raise e
 
+    def company_to_response(self, company: Company) -> CompanyResponse:
+        return CompanyResponse(
+            id=company.id,
+            name=company.name,
+            description=company.description,
+            site=company.site,
+            city=company.city,
+            country=company.country,
+            is_visible=company.is_visible,
+            owner_id=company.owner_id,
+        )
+    async def get_all_companies_im_in(self, page: int, per_page: int, current_user_id: int) -> CompanyListResponse:
+        offset = (page - 1) * per_page
+        try:
+            async with self.async_session as session:
+                query = select(Company).join(Action).filter(and_(Action.type_of_action == "MEMBER", Action.user_id == current_user_id)).order_by(Company.id).offset(offset)
+                companies = await session.execute(query)
+                if companies is None:
+                    return None
+                else:
+                    company_list = [self.company_to_response(company) for company in companies.scalars().all()]
+                    total_count = len(company_list)
+                    total_pages = ceil(total_count / per_page)
+                    return CompanyListResponse(companies=company_list, per_page=per_page, page=page, total=total_count,
+                                               total_pages=total_pages)
+        except Exception as e:
+            print(f"An error occurred while getting invites: {e}")
+            raise e
+
     async def get_all_requests_user(self, user_id: int) -> ActionListResponse:
         try:
            async with self.async_session as session:
@@ -214,7 +244,7 @@ class ActionRepository:
     async def get_all_invites_company(self, company_id:int) -> ActionListResponse:
         try:
             async with self.async_session as session:
-                query = select(Action).filter(Action.company_id == company_id and Action.type == "INVITE")
+                query = select(Action).filter(and_(Action.company_id == company_id, Action.type_of_action == "INVITE"))
                 invites = await session.execute(query)
                 if invites is  None:
                     return None
@@ -235,7 +265,7 @@ class ActionRepository:
                     return None
 
                 else:
-                    requests_list = [action_to_resposne(request) for request in requests.scalars().all()]
+                    requests_list = [action_to_scheme(request) for request in requests.scalars().all()]
                     return ActionListResponse(actions=requests_list)
         except Exception as e:
             print(f"An error occurred while getting invites: {e}")
@@ -346,3 +376,16 @@ class ActionRepository:
             print(f"An error occurred while getting all admins: {e}")
             raise e
 
+    async def cancel_request_company(self, request_: ActionScheme) -> Action:
+        try:
+            async with self.async_session as session:
+                request = await session.get(Action, request_.id)
+                if request and request.status == "PENDING":
+                    request.status = "CANCELLED"
+                    await session.commit()
+                    logger.info(f"Request status was changed to CANCELLED by user")
+                    return request
+
+        except Exception as e:
+            print(f"An error occured while cancelling the request: {e}")
+            raise e
