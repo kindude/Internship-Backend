@@ -3,7 +3,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from repositories.company_repository import CompanyRepository
-from schemas.Action import ActionResponse, ActionListResponse
 
 from schemas.Company import CompanyResponse, CompanyScheme, CompanyDeleteScheme, CompanyListResponse, CompanySchemeRequest
 from schemas.User import  UserResponse
@@ -73,5 +72,7 @@ async def get_my_companies(page: int = Query(1, alias="page"), per_page: int = Q
     company_repository = CompanyRepository(database=db)
     response = await company_repository.get_my_companies(page=page, per_page=per_page, current_user_id=current_user.id)
     return response
+
+
 
 
