@@ -10,6 +10,6 @@ class ActionResponse(BaseModel):
 
 
 class ActionScheme(ActionResponse):
-    id:int
+    id: int
 class ActionListResponse(BaseModel):
     actions: List[ActionScheme]

@@ -1,10 +1,10 @@
-
+from typing import List
 
 from sqlalchemy import Column, Integer, String, Boolean, ARRAY, ForeignKey
 
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
-from app.models.BaseModel import BaseModel
+from models.BaseModel import BaseModel
 from sqlalchemy import Column, Integer, String, ForeignKey, Enum
 
 class User(BaseModel):
@@ -22,6 +22,7 @@ class User(BaseModel):
     invites = relationship("Action", back_populates="user", cascade="all, delete-orphan")
 
     def to_dict(self):
+
         return {
             'id': self.id,
             'username': self.username,
@@ -51,7 +52,7 @@ class Company(BaseModel):
     owner_id = Column(Integer, ForeignKey('users.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
     owner = relationship('User', back_populates='companies')
     requests = relationship("Action", back_populates="company", cascade="all, delete-orphan")
-
+    children: Mapped[List["Quiz"]] = relationship()
     def to_dict(self):
         return {
             'id': self.id,
@@ -92,23 +93,24 @@ class Quiz(BaseModel):
     title = Column(String, index=True, nullable=False)
     description = Column(String, nullable=False)
     frequency = Column(Integer, nullable=False)
-    company_id = Column(Integer, ForeignKey("companies.id"))
-    questions = relationship("Question", back_populates="quiz")
+    company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"))
+    question: Mapped[List["Question"]] = relationship()
+
 
 class Question(BaseModel):
     __tablename__ = "questions"
 
     id = Column(Integer, primary_key=True, index=True)
     text = Column(String, nullable=False)
-    quiz_id = Column(Integer, ForeignKey("quizzes.id"))
-    options = relationship("Option", back_populates="question")
+    quiz_id: Mapped[int] = mapped_column(ForeignKey("quizzes.id"))
+
+    option: Mapped[List["Option"]] = relationship()
 
 class Option(BaseModel):
     __tablename__ = "options"
 
     id = Column(Integer, primary_key=True, index=True)
     text = Column(String, nullable=False)
-    question_id = Column(Integer, ForeignKey("questions.id"))
+    question_id: Mapped[int] = mapped_column(ForeignKey("questions.id"))
     is_correct = Column(Boolean, default=False)
-
 

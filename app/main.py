@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from  routers.routers_company import router_companies
 from routers.routers_action import router_action
 from routers.routers_user import router_user
-
+from routers.router_quizzes import router_quiz
 app = FastAPI()
 
 origins = ["http://localhost:3000", "http://localhost:3001"]
@@ -27,6 +27,7 @@ app.add_middleware(
 app.include_router(router_companies)
 app.include_router(router_user)
 app.include_router(router_action)
+app.include_router(router_quiz)
 
 
 
