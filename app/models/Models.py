@@ -52,7 +52,7 @@ class Company(BaseModel):
     owner_id = Column(Integer, ForeignKey('users.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
     owner = relationship('User', back_populates='companies')
     requests = relationship("Action", back_populates="company", cascade="all, delete-orphan")
-    children: Mapped[List["Quiz"]] = relationship()
+    quizzes: Mapped[List["Quiz"]] = relationship(cascade="all, delete-orphan")
     def to_dict(self):
         return {
             'id': self.id,
@@ -94,7 +94,7 @@ class Quiz(BaseModel):
     description = Column(String, nullable=False)
     frequency = Column(Integer, nullable=False)
     company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"))
-    question: Mapped[List["Question"]] = relationship()
+    question: Mapped[List["Question"]] = relationship(cascade="all, delete-orphan")
 
 
 class Question(BaseModel):
@@ -104,7 +104,7 @@ class Question(BaseModel):
     text = Column(String, nullable=False)
     quiz_id: Mapped[int] = mapped_column(ForeignKey("quizzes.id"))
 
-    option: Mapped[List["Option"]] = relationship()
+    option: Mapped[List["Option"]] = relationship(cascade="all, delete-orphan")
 
 class Option(BaseModel):
     __tablename__ = "options"

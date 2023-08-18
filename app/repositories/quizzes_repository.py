@@ -1,12 +1,12 @@
 from typing import List
 
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
-from sqlalchemy import select, delete, desc
+from sqlalchemy import select, delete, and_
 from sqlalchemy.orm import selectinload
 
 from models.Models import Quiz, Question, Option
 from schemas.Quiz import QuizScheme, QuestionScheme, OptionsListScheme, QuestionsListScheme, QuizResponse, \
-    QuestionResponse, OptionResponse, QuizRequest
+    QuestionResponse, OptionResponse, QuizRequest, QuizListResponse, OptionScheme
 
 
 class QuizzRepository:
@@ -104,3 +104,58 @@ class QuizzRepository:
                 return quiz_ret
         except Exception as e:
             print(f"Error: {e}")
+
+    async def get_quizzes(self, company_id:int) -> QuizListResponse:
+        try:
+            async with self.async_session as session:
+                query = select(Quiz).filter(Quiz.company_id == company_id)
+                quizzes = await session.execute(query)
+                quizzes = quizzes.scalars().all()
+                quizzes_retrieved = []
+                for quiz in quizzes:
+                    quiz_rep = await self.get_quiz(quiz.id)
+                    quizzes_retrieved.append(quiz_rep)
+
+                return QuizListResponse(quizzes=quizzes_retrieved)
+
+        except Exception as e:
+            print(f"Error: {e}")
+
+
+    async def update_option(self, option:OptionScheme):
+        try:
+            async with self.async_session as session:
+                option_to_update = await session.get(Option, option.id)
+                if option_to_update is not None:
+                    option_to_update.text = option.text
+                    option_to_update.is_correct=option.is_correct
+                    session.commit()
+                return self.option_to_response(option_to_update)
+        except Exception as e:
+            print(f"Error: {e}")
+
+    async def update_question(self, question:QuestionScheme):
+        try:
+            async with self.async_session as session:
+                question_to_update = await session.get(Question, question.id)
+                if question_to_update is not None:
+                    question_to_update.text = question.question
+                    session.commit()
+
+                return self.question_to_response(question_to_update, options_=question.options)
+        except Exception as e:
+            print(f"Error: {e}")
+
+
+    async def update_quiz(self, quiz:QuizScheme):
+        try:
+            async with self.async_session as session:
+                quiz_to_update = await session.get(Quiz, quiz.id)
+                if quiz_to_update is not None:
+                    quiz_to_update.title = quiz.title
+                    quiz_to_update.description = quiz.description
+                    quiz_to_update.frequency = quiz.frequency
+                    return self.quiz_to_response(quiz_to_update, quiz.questions)
+        except Exception as e:
+            print(f"Error: {e}")
+

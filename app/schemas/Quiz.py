@@ -35,11 +35,11 @@ class QuestionScheme(QuestionResponse):
     id: int
     question: str
     quiz_id: int
-    options: List[OptionResponse]
+    options: List[OptionScheme]
 
 
 class QuestionsListScheme(BaseModel):
-    questions: List[QuestionResponse]
+    questions: List[QuestionScheme]
 
 
 class QuizResponse(BaseModel):
@@ -52,8 +52,12 @@ class QuizResponse(BaseModel):
 
 class QuizRequest(QuizResponse):
     questions: List[QuestionRequest]
+
 class QuizScheme(QuizResponse):
     id:int
+class QuizListResponse(BaseModel):
+    quizzes: List[QuizScheme]
+
 
 
 
