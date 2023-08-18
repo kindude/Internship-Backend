@@ -5,8 +5,9 @@ from sqlalchemy import select, delete, and_
 from sqlalchemy.orm import selectinload
 
 from models.Models import Quiz, Question, Option
+from repositories.action_repository import logger
 from schemas.Quiz import QuizScheme, QuestionScheme, OptionsListScheme, QuestionsListScheme, QuizResponse, \
-    QuestionResponse, OptionResponse, QuizRequest, QuizListResponse, OptionScheme
+    QuestionResponse, OptionResponse, QuizRequest, QuizListResponse, OptionScheme,  DeleteScheme
 
 
 class QuizzRepository:
@@ -159,3 +160,89 @@ class QuizzRepository:
         except Exception as e:
             print(f"Error: {e}")
 
+
+    async def delete_quiz(self, quiz_id:int):
+        try:
+            company = await self.get_quiz(id=quiz_id)
+            if company:
+                async with self.async_session as session:
+                    query = delete(Quiz).where(Quiz.id == quiz_id)
+                    result = await session.execute(query)
+                    await session.commit()
+                    if result:
+                        logger.info(f"Quiz was deleted ID: {quiz_id}")
+                        return DeleteScheme(
+                            message="Quiz was successfully deleted",
+                            id=id
+                        )
+                    else:
+                        return DeleteScheme(
+                            message="Quiz wasn't deleted",
+                            id=-1
+                        )
+            else:
+                return DeleteScheme(
+                    message="Quiz wasn't deleted",
+                    id=-1
+                )
+
+        except Exception as e:
+            print(f"An error occurred while deleting quiz: {e}")
+
+
+
+    async def delete_question(self, question_id:int):
+        try:
+            company = await self.get_quiz(id=question_id)
+            if company:
+                async with self.async_session as session:
+                    query = delete(Question).where(Question.id == question_id)
+                    result = await session.execute(query)
+                    await session.commit()
+                    if result:
+                        logger.info(f"Question was deleted ID: {question_id}")
+                        return DeleteScheme(
+                            message="Question was successfully deleted",
+                            id=id
+                        )
+                    else:
+                        return DeleteScheme(
+                            message="Question wasn't deleted",
+                            id=-1
+                        )
+            else:
+                return DeleteScheme(
+                    message="Question wasn't deleted",
+                    id=-1
+                )
+
+        except Exception as e:
+            print(f"An error occurred while deleting question: {e}")
+
+    async def delete_option(self, option_id:int):
+        try:
+            company = await self.get_quiz(id=option_id)
+            if company:
+                async with self.async_session as session:
+                    query = delete(Question).where(Question.id == option_id)
+                    result = await session.execute(query)
+                    await session.commit()
+                    if result:
+                        logger.info(f"Option was deleted ID: {option_id}")
+                        return DeleteScheme(
+                            message="Option was successfully deleted",
+                            id=id
+                        )
+                    else:
+                        return DeleteScheme(
+                            message="Option wasn't deleted",
+                            id=-1
+                        )
+            else:
+                return DeleteScheme(
+                    message="Option wasn't deleted",
+                    id=-1
+                )
+
+        except Exception as e:
+            print(f"An error occurred while deleting option: {e}")

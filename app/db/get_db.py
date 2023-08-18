@@ -1,3 +1,6 @@
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from db.connect import connect_Postgres
 
 
@@ -7,4 +10,5 @@ async def get_db():
         yield async_session
     finally:
         await async_session.close()
+
 

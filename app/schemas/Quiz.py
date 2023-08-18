@@ -60,4 +60,7 @@ class QuizListResponse(BaseModel):
 
 
 
+class DeleteScheme(BaseModel):
+    message: str
+    id: int
 
