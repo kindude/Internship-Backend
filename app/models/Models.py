@@ -1,11 +1,14 @@
 from typing import List
 
-from sqlalchemy import Column, Integer, String, Boolean, ARRAY, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, ARRAY, ForeignKey, DateTime
 
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from models.BaseModel import BaseModel
 from sqlalchemy import Column, Integer, String, ForeignKey, Enum
+from datetime import datetime
+
+
 
 class User(BaseModel):
     __tablename__ = 'users'
@@ -113,4 +116,3 @@ class Option(BaseModel):
     text = Column(String, nullable=False)
     question_id: Mapped[int] = mapped_column(ForeignKey("questions.id"))
     is_correct = Column(Boolean, default=False)
-

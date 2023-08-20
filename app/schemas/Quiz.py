@@ -4,9 +4,9 @@ from pydantic import BaseModel
 
 
 class OptionResponse(BaseModel):
-    text:str
-    question_id:int
-    is_correct:bool
+    text: str
+    question_id: int
+
 
 class OptionRequest(BaseModel):
     text:str
@@ -43,21 +43,27 @@ class QuestionsListScheme(BaseModel):
 
 
 class QuizResponse(BaseModel):
+    id: int
     title: str
     description: str
     frequency: int
     company_id: int
+
+
+class QuestionListRequest(QuestionResponse):
     questions: List[QuestionResponse]
 
 
-class QuizRequest(QuizResponse):
-    questions: List[QuestionRequest]
+class QuizRequest(BaseModel):
+    title: str
+    description: str
+    frequency: int
+    company_id: int
 
 class QuizScheme(QuizResponse):
     id:int
 class QuizListResponse(BaseModel):
-    quizzes: List[QuizScheme]
-
+    quizzes: List[QuizResponse]
 
 
 class DeleteScheme(BaseModel):

@@ -144,10 +144,11 @@ class ActionRepository:
                     Action.type_of_action == "MEMBER"
                 ))
 
-                action = await session.execute(query)
-                action = action.scalar_one_or_none()
-                if action:
-                    await session.delete(action)
+                actions = await session.execute(query)
+                actions = actions.scalars().all()
+                if actions:
+                    for action in actions:
+                        await session.delete(action)
                     await session.commit()
                     logger.info(f"User with ID {user_id} left the company")
                     return True
@@ -184,6 +185,7 @@ class ActionRepository:
             is_visible=company.is_visible,
             owner_id=company.owner_id,
         )
+
     async def get_all_companies_im_in(self, page: int, per_page: int, current_user_id: int) -> CompanyListResponse:
         offset = (page - 1) * per_page
         try:

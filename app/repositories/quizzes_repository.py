@@ -52,19 +52,19 @@ class QuizzRepository:
                 print(options_response)
                 question_response = [self.question_to_response(question, options_response) for question in questions]
                 print(question_response)
-                return self.quiz_to_response(quizToAdd, question_response)
+                return self.quiz_to_response(quizToAdd)
 
 
         except Exception as e:
 
             print("Error:", str(e))
 
-    def quiz_to_response(self, quiz:Quiz, questions_: List[QuestionResponse]) -> QuizResponse:
+    def quiz_to_response(self, quiz:Quiz) -> QuizResponse:
         return QuizResponse(
+            id=quiz.id,
             title=quiz.title,
             description=quiz.description,
             frequency=quiz.frequency,
-            questions=questions_,
             company_id=quiz.company_id
         )
     def question_to_response(self, question:Question, options_: List[OptionResponse]) ->QuestionResponse:
@@ -89,24 +89,24 @@ class QuizzRepository:
 
                 query = select(Question).filter(Question.quiz_id == quiz.id)
 
-                questions = await session.execute(query)
-                questions = questions.scalars().all()
-                questions_to_quizz = []
-                for q in questions:
-                    query = select(Option).filter(Option.question_id == q.id)
-                    options = await session.execute(query)
-                    options = options.scalars().all()
-                    options_response = [self.option_to_response(option) for option in options]
-                    questions_to_quizz.append(self.question_to_response(q, options_response))
+                # questions = await session.execute(query)
+                # questions = questions.scalars().all()
+                # questions_to_quizz = []
+                # for q in questions:
+                #     query = select(Option).filter(Option.question_id == q.id)
+                #     options = await session.execute(query)
+                #     options = options.scalars().all()
+                #     options_response = [self.option_to_response(option) for option in options]
+                #     questions_to_quizz.append(self.question_to_response(q, options_response))
 
-                quiz_ret = self.quiz_to_response(quiz,questions_to_quizz)
+                quiz_ret = self.quiz_to_response(quiz)
                 if quiz_ret is None:
                     return None
                 return quiz_ret
         except Exception as e:
             print(f"Error: {e}")
 
-    async def get_quizzes(self, company_id:int) -> QuizListResponse:
+    async def get_quizzes(self, company_id: int) -> QuizListResponse:
         try:
             async with self.async_session as session:
                 query = select(Quiz).filter(Quiz.company_id == company_id)
