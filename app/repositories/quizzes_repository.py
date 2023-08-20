@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 from sqlalchemy import select, delete, and_
 from sqlalchemy.orm import selectinload
 
-from models.Models import Quiz, Question, Option
+from models.Models import Quiz, Question, Option, QuizResult, User, CompanyRating
 from repositories.action_repository import logger
 from schemas.Quiz import QuizScheme, QuestionScheme, OptionsListScheme, QuestionsListScheme, QuizResponse, \
     QuestionResponse, OptionResponse, QuizRequest, QuizListResponse, OptionScheme,  DeleteScheme
@@ -246,3 +246,62 @@ class QuizzRepository:
 
         except Exception as e:
             print(f"An error occurred while deleting option: {e}")
+
+    async def calculate_and_update_average_score_in_company(self, user_id: int, company_id: int) -> float:
+        results = (
+            self.async_session.query(QuizResult)
+            .filter(QuizResult.user_id == user_id, QuizResult.company_id == company_id)
+            .order_by(QuizResult.timestamp.asc())
+            .all()
+        )
+
+        total_score = 0
+        total_questions = 0
+
+        for result in results:
+            total_score += result.correct_answers
+            total_questions += result.questions
+
+        if total_questions == 0:
+            return 0.0
+
+        average_score = total_score / total_questions
+
+        company_rating = CompanyRating(
+            company_id=company_id,
+            user_id=user_id,
+            rating=average_score
+        )
+        self.async_session.add(company_rating)
+        await self.async_session.commit()
+
+        return average_score
+
+    async def calculate_and_update_average_score_in_system(self, user_id: int) -> float:
+        results = (
+            self.async_session.query(QuizResult)
+            .filter(QuizResult.user_id == user_id)
+            .order_by(QuizResult.timestamp.asc())
+            .all()
+        )
+
+        total_score = 0
+        total_questions = 0
+
+        for result in results:
+            total_score += result.correct_answers
+            total_questions += result.questions
+
+        if total_questions == 0:
+            return 0.0
+
+        average_score = total_score / total_questions
+
+        # Получаем пользователя по user_id
+        user = self.async_session.query(User).get(user_id)
+
+        # Обновляем поле rating в модели User
+        user.rating = average_score
+        await self.async_session.commit()
+
+        return average_score

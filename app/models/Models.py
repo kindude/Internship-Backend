@@ -1,10 +1,10 @@
 from typing import List
 
-from sqlalchemy import Column, Integer, String, Boolean, ARRAY, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, ARRAY, ForeignKey, DateTime, Float
 
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
-from models.BaseModel import BaseModel
+from app.models.BaseModel import BaseModel
 from sqlalchemy import Column, Integer, String, ForeignKey, Enum
 from datetime import datetime
 
@@ -23,6 +23,7 @@ class User(BaseModel):
     roles = Column(ARRAY(String))
     companies = relationship("Company", back_populates="owner")
     invites = relationship("Action", back_populates="user", cascade="all, delete-orphan")
+    rating = Column(Float, nullable=True, default=0)
 
     def to_dict(self):
 
@@ -56,6 +57,7 @@ class Company(BaseModel):
     owner = relationship('User', back_populates='companies')
     requests = relationship("Action", back_populates="company", cascade="all, delete-orphan")
     quizzes: Mapped[List["Quiz"]] = relationship(cascade="all, delete-orphan")
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -116,3 +118,24 @@ class Option(BaseModel):
     text = Column(String, nullable=False)
     question_id: Mapped[int] = mapped_column(ForeignKey("questions.id"))
     is_correct = Column(Boolean, default=False)
+
+class QuizResult(BaseModel):
+    __tablename__ = "quiz_results"
+
+    id = Column(Integer, primary_key=True, index=True)
+    company_id: Mapped[int] = mapped_column("companies.id")
+    user_id: Mapped[int] = mapped_column("users.id")
+    quiz_id: Mapped[int] = mapped_column("quizzes.id")
+    correct_answers = Column(Integer, nullable=False, default=0)
+    questions = Column(Integer, nullable=False, default=0)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+
+
+class CompanyRating(BaseModel):
+    __tablename__ = "company_ratings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    company_id: Mapped[int] = mapped_column("companies.id")
+    user_id: Mapped[int] = mapped_column("users.id")
+    rating = Column(Float, default=0, nullable=False)
+
