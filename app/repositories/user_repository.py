@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, select
 from models.Models import User, Action, Company
 from schemas.Action import ActionResponse, ActionListResponse, ActionScheme
+from schemas.Quiz import DeleteScheme
 from schemas.User import UserResponse, UsersListResponse, UserScheme, UserDeleteScheme, UserLogin, Token, \
     UserResponseNoPass
 from schemas.pasword_hashing import hash_with_salt
@@ -50,9 +51,10 @@ def user_to_response(user: User) -> UserResponse:
         roles=user.roles
     )
 
+
 class UserRepository:
 
-    def __init__(self, database: async_sessionmaker[AsyncSession]):
+    def __init__(self, database: AsyncSession):
         self.async_session = database
 
     async def authenticate_user(self, request: UserLogin) -> Token:
@@ -76,23 +78,21 @@ class UserRepository:
             request.password = hashed
             user_dict = request.dict()
             user = User(**user_dict)
-            async with self.async_session as session:
-                session.add(user)
-                await session.commit()
-                logger.info(f"New user created: {request.username}")
-                return user
+            self.async_session.add(user)
+            await self.async_session.commit()
+            logger.info(f"New user created: {request.username}")
+            return user
         except Exception as e:
             print(f"An error occurred while creating the user: {e}")
             raise e
 
     async def get_user(self, id: int) -> UserResponseNoPass:
-        async with self.async_session as session:
             query = select(User).filter(User.id == id)
-            result = await session.execute(query)
+            result = await self.async_session.execute(query)
             user = result.scalar_one_or_none()
-            if user is None:
-                return None
-            return user
+            if user:
+                return user
+
 
     async def get_users(self, page: int, per_page: int) -> UsersListResponse:
 
@@ -111,104 +111,74 @@ class UserRepository:
         return UsersListResponse(users=user_list, per_page=per_page, page=page, total=total_count,
                                  total_pages=total_pages)
 
-
-
-    async def del_user(self, id: int) -> UserDeleteScheme:
+    async def del_user(self, id: int) -> DeleteScheme:
         try:
             user = await self.get_user(id=id)
-            if user:
-                async with self.async_session as session:
-                    query = delete(User).where(User.id == id)
-                    result = await session.execute(query)
-                    await session.commit()
-                    if result:
-                        logger.info(f"Пользователь удален: ID {id}")
-                        return UserDeleteScheme(
-                            message="User was successfully deleted",
-                            id=id
-                        )
-                    else:
-                        return UserDeleteScheme(
-                            message="User wasn't deleted",
-                            id=-1
-                        )
-            else:
-                return UserDeleteScheme(
+            if not user:
+                return DeleteScheme(
                     message="User wasn't deleted",
                     id=-1
                 )
+            query = delete(User).where(User.id == id)
+            result = await self.async_session.execute(query)
+            await self.async_session.commit()
+            if not result:
+                return DeleteScheme(
+                    message="User wasn't deleted",
+                    id=-1
+                )
+            logger.info(f"User was deleted ID: {id}")
+            return DeleteScheme(
+                message="User was successfully deleted",
+                id=id)
 
         except Exception as e:
             print(f"An error occurred while deleting user: {e}")
 
     async def update_user(self, id: int, request: UserScheme) -> User:
         try:
-            async with self.async_session as session:
-                user = await session.get(User, id)
-                if user is not None:
-                    user.username = request.username
-                    user.email = user.email
-                    user.password = hash(password=request.password)
-                    user.city = request.city
-                    user.country = request.country
-                    user.phone = request.phone
-                    user.status = request.status
-                    user.roles = request.roles
-                    await session.commit()
-                    logger.info(f"User updated: ID {id}")
-                    return user
+            user = await self.async_session.get(User, id)
+            user = user.scalar_one_or_none()
+            if user:
+                user.username = request.username
+                user.email = user.email
+                user.password = hash_with_salt(password=request.password)
+                user.city = request.city
+                user.country = request.country
+                user.phone = request.phone
+                user.status = request.status
+                user.roles = request.roles
+                await self.async_session.commit()
+                logger.info(f"User updated: ID {id}")
+                return user
         except Exception as e:
             print(f"An error occurred while updating user: {e}")
 
     async def get_user_by_username(self, username: str) -> UserResponse:
         try:
-            async with self.async_session as session:
-                query = select(User).filter(User.username == username)
-                result = await session.execute(query)
-                user = result.scalar_one_or_none()
-                if user is None:
-                    return None
-                else:
-                    return UserResponse(
-                        id=user.id,
-                        username=user.username,
-                        email=user.email,
-                        password=user.password,
-                        city=user.password,
-                        country=user.country,
-                        phone=user.phone,
-                        status=user.status,
-                        roles=user.roles
-                    )
+            query = select(User).filter(User.username == username)
+            result = await self.async_session.execute(query)
+            user = result.scalar_one_or_none()
+            if user:
+                return user_to_response(user)
         except Exception as e:
             print(f"An error occurred while creating the user: {e}")
             raise e
 
     async def get_user_by_email(self, email: str) -> UserResponse:
         try:
-            async with self.async_session as session:
-                query = select(User).filter(User.email == email)
-                result = await session.execute(query)
-                user = result.scalar_one_or_none()
-                if user is None:
-                    return None
-                else:
-                    return UserResponse(
-                        id=user.id,
-                        username=user.username,
-                        email=user.email,
-                        password=user.password,
-                        city=user.password,
-                        country=user.country,
-                        phone=user.phone,
-                        status=user.status,
-                        roles=user.roles
-                    )
+            query = select(User).filter(User.email == email)
+            result = await self.async_session.execute(query)
+            user = result.scalar_one_or_none()
+            if user:
+                return user_to_response(user)
+
         except Exception as e:
             print(f"An error occurred while creating the user: {e}")
             raise e
 
-    def create_password(self):
+    @staticmethod
+    def create_password():
         password = str(datetime.datetime.utcnow())
         pass_hashed = hash_with_salt(password=password)
         return pass_hashed

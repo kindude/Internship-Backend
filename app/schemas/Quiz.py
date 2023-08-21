@@ -23,8 +23,7 @@ class OptionsListScheme(BaseModel):
 
 class QuestionResponse(BaseModel):
     question: str
-    quiz_id:int
-    options: List[OptionResponse]
+    quiz_id: int
 
 class QuestionRequest(BaseModel):
     question: str
@@ -50,7 +49,7 @@ class QuizResponse(BaseModel):
     company_id: int
 
 
-class QuestionListRequest(QuestionResponse):
+class QuestionListResponse(BaseModel):
     questions: List[QuestionResponse]
 
 

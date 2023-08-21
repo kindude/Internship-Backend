@@ -15,7 +15,7 @@ from repositories.user_repository import UserRepository
 from schemas.Action import ActionListResponse, ActionResponse, ActionScheme
 from schemas.Company import CompanyListResponse
 from schemas.Quiz import QuizResponse, QuizRequest, QuizListResponse, QuizScheme, QuestionResponse, QuestionScheme, \
-    OptionScheme
+    OptionScheme, QuestionListResponse
 from schemas.User import UserResponse, UserResponseNoPass, UsersListResponse
 from utils.auth import get_current_user
 
@@ -45,7 +45,7 @@ async def get_quiz(company_id:int, quiz_id:int ,  db: AsyncSession = Depends(get
     company_repository = CompanyRepository(database=db)
     company = await company_repository.get_company(id=company_id)
     action_repository = ActionRepository(database=db)
-    member = await action_repository.if_member(user_id=current_user.id)
+    member = await action_repository.if_member(user_id=current_user.id, company_id=company_id)
     quiz_repository = QuizzRepository(database=db)
     if member:
         retrieved_quiz = await quiz_repository.get_quiz(id=quiz_id)
@@ -57,14 +57,24 @@ async def get_quizzes(company_id:int,  db:AsyncSession = Depends(get_db), curren
     company_repository = CompanyRepository(database=db)
     company = await company_repository.get_company(id=company_id)
     action_repository = ActionRepository(database=db)
-    admins = await action_repository.get_all_admins(company_id=company_id, per_page=5, page=1)
-    if admins:
-        admin_ids = [admin.id for admin in admins.users]
-        quiz_repository = QuizzRepository(database=db)
-        if company.owner_id == current_user.id or current_user.id in admin_ids:
-            retrieved_quizzes = await quiz_repository.get_quizzes(company_id=company_id)
+    quiz_repository = QuizzRepository(database=db)
+    if action_repository.if_member(user_id=current_user.id, company_id=company_id):
+        retrieved_quizzes = await quiz_repository.get_quizzes(company_id=company_id)
+        if retrieved_quizzes:
             return retrieved_quizzes
-        return None
+    raise HTTPException(status_code=404, detail="None quizzes")
+
+@router_quiz.get("/company/{company_id}/quiz/{quiz_id}/questions", response_model=QuestionListResponse, tags=["Quizzes"])
+async def get_questions(company_id:int, quiz_id:int, db:AsyncSession =Depends(get_db), current_user:UserResponse =Depends(get_current_user)):
+    company_repository = CompanyRepository(database=db)
+    action_repository = ActionRepository(database=db)
+    quiz_repository = QuizzRepository(database=db)
+    if action_repository.if_member(user_id=current_user.id, company_id=company_id):
+        questions = await quiz_repository.get_questions(quiz_id=quiz_id)
+        if questions:
+            return questions
+        raise HTTPException(status_code=404, detail="None questions for this quiz")
+
 
 @router_quiz.post("/company/{company_id}/quiz/update", response_model=QuizListResponse, tags=["Quizzes"])
 async def update_quiz(company_id:int, quiz:QuizScheme, db:AsyncSession = Depends(get_db), current_user:UserResponse =Depends(get_current_user)):
