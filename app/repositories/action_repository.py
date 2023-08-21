@@ -164,6 +164,7 @@ class ActionRepository:
             print(f"An error occurred while getting invites: {e}")
             raise e
 
+    @staticmethod
     def company_to_response(self, company: Company) -> CompanyResponse:
         return CompanyResponse(
             id=company.id,

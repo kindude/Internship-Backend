@@ -1,12 +1,12 @@
-from typing import List
 
-from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
+
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete, and_
-from sqlalchemy.orm import selectinload
 
 from models.Models import Quiz, Question, Option, QuizResult, User, CompanyRating
 from repositories.action_repository import logger
-from schemas.Quiz import QuizScheme, QuestionScheme, OptionsListScheme, QuestionsListScheme, QuizResponse, \
+from repositories.quiz_result_repository import QuizResultRepository
+from schemas.Quiz import  QuestionScheme, OptionsListScheme, QuestionsListScheme, QuizResponse, \
     QuestionResponse, OptionResponse, QuizRequest, QuizListResponse, OptionScheme, DeleteScheme, QuestionListResponse
 
 
@@ -58,6 +58,7 @@ class QuizzRepository:
         except Exception as e:
             print("Error:", str(e))
 
+    @staticmethod
     def quiz_to_response(self, quiz:Quiz) -> QuizResponse:
         return QuizResponse(
             id=quiz.id,
@@ -66,12 +67,15 @@ class QuizzRepository:
             frequency=quiz.frequency,
             company_id=quiz.company_id
         )
+
+    @staticmethod
     def question_to_response(self, question:Question) ->QuestionResponse:
         print(question.text, question.quiz_id)
         return QuestionResponse(
             question=question.text,
             quiz_id=question.quiz_id
         )
+    @staticmethod
     def option_to_response(self, option:Option) -> OptionResponse:
         return OptionResponse(
             text=option.text,
@@ -136,7 +140,7 @@ class QuizzRepository:
             option_to_update = option_to_update.scalar_one_or_none()
             if option_to_update is not None:
                 option_to_update.text = option.text
-                option_to_update.is_correct=option.is_correct
+                option_to_update.is_correct = option.is_correct
                 await self.async_session.commit()
             return self.option_to_response(option_to_update)
         except Exception as e:
@@ -153,7 +157,7 @@ class QuizzRepository:
         except Exception as e:
             print(f"Error: {e}")
 
-    async def update_quiz(self, quiz:QuizScheme):
+    async def update_quiz(self, quiz:QuizResponse):
         try:
             quiz_to_update = await self.async_session.get(Quiz, quiz.id)
             quiz_to_update = quiz_to_update.scalar_one_or_none()
@@ -239,6 +243,32 @@ class QuizzRepository:
         except Exception as e:
             print(f"An error occurred while deleting option: {e}")
 
+    async def take_quiz(self, quiz_id: int, company_id:int, user_id:int, questions: QuestionsListScheme):
+        quiz_result_rep = QuizResultRepository(database=self.async_session)
+        total_questions = len(questions.questions)
+        correct_answers = 0
+
+        for question in questions.questions:
+            query_option = select(Option).filter(and_(
+                Option.is_correct == True,
+                Option.question_id == question.id
+            ))
+
+            options = await self.async_session.execute(query_option)
+            correct_option_ids = [option.id for option in options.scalars()]
+
+            if question.option.id in correct_option_ids:
+                correct_answers += 1
+
+        total_questions, correct_answers = await quiz_result_rep.create_quiz_result(quiz_id, company_id, user_id,
+                                                                                  correct_answers, total_questions)
+
+        company_rating = await self.calculate_and_update_average_score_in_company(user_id=user_id, company_id=company_id)
+        system_rating = await self.calculate_and_update_average_score_in_system(user_id=user_id)
+
+        return company_rating, system_rating
+
+
     async def calculate_and_update_average_score_in_company(self, user_id: int, company_id: int) -> float:
         results = (
             self.async_session.query(QuizResult)
@@ -295,6 +325,8 @@ class QuizzRepository:
         await self.async_session.commit()
 
         return average_score
+
+
 
 
 

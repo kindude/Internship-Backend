@@ -1,22 +1,17 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.get_db import get_db
-from models.Models import Quiz
 
 from repositories.action_repository import ActionRepository
 from repositories.company_repository import CompanyRepository
 from repositories.quizzes_repository import QuizzRepository
-from repositories.user_repository import UserRepository
 
-from schemas.Action import ActionListResponse, ActionResponse, ActionScheme
-from schemas.Company import CompanyListResponse
-from schemas.Quiz import QuizResponse, QuizRequest, QuizListResponse, QuizScheme, QuestionResponse, QuestionScheme, \
-    OptionScheme, QuestionListResponse
-from schemas.User import UserResponse, UserResponseNoPass, UsersListResponse
+from schemas.Quiz import QuizResponse, QuizRequest, QuizListResponse, QuestionResponse, QuestionScheme, \
+    OptionScheme, QuestionListResponse, QuestionsListScheme
+from schemas.User import UserResponse
 from utils.auth import get_current_user
 
 logger = logging.getLogger(__name__)
@@ -52,10 +47,9 @@ async def get_quiz(company_id:int, quiz_id:int ,  db: AsyncSession = Depends(get
         return retrieved_quiz
     raise HTTPException(status_code=403, detail="You are not a member of the company")
 
+
 @router_quiz.get("/company/{company_id}/get-quizzes/", response_model=QuizListResponse, tags=["Quizzes"])
 async def get_quizzes(company_id:int,  db:AsyncSession = Depends(get_db), current_user:UserResponse = Depends(get_current_user)):
-    company_repository = CompanyRepository(database=db)
-    company = await company_repository.get_company(id=company_id)
     action_repository = ActionRepository(database=db)
     quiz_repository = QuizzRepository(database=db)
     if action_repository.if_member(user_id=current_user.id, company_id=company_id):
@@ -66,7 +60,6 @@ async def get_quizzes(company_id:int,  db:AsyncSession = Depends(get_db), curren
 
 @router_quiz.get("/company/{company_id}/quiz/{quiz_id}/questions", response_model=QuestionListResponse, tags=["Quizzes"])
 async def get_questions(company_id:int, quiz_id:int, db:AsyncSession =Depends(get_db), current_user:UserResponse =Depends(get_current_user)):
-    company_repository = CompanyRepository(database=db)
     action_repository = ActionRepository(database=db)
     quiz_repository = QuizzRepository(database=db)
     if action_repository.if_member(user_id=current_user.id, company_id=company_id):
@@ -77,7 +70,7 @@ async def get_questions(company_id:int, quiz_id:int, db:AsyncSession =Depends(ge
 
 
 @router_quiz.post("/company/{company_id}/quiz/update", response_model=QuizListResponse, tags=["Quizzes"])
-async def update_quiz(company_id:int, quiz:QuizScheme, db:AsyncSession = Depends(get_db), current_user:UserResponse =Depends(get_current_user)):
+async def update_quiz(company_id:int, quiz:QuizResponse, db:AsyncSession = Depends(get_db), current_user:UserResponse =Depends(get_current_user)):
     company_repository = CompanyRepository(database=db)
     company = await company_repository.get_company(id=company_id)
     action_repository = ActionRepository(database=db)
@@ -169,3 +162,12 @@ async def delete_question(company_id: int, option_id:int,
             deleted_question = await quiz_repository.delete_option(option_id==option_id)
             return deleted_question
         raise HTTPException(status_code=403, detail="You are not allowed to delete option")
+
+
+@router_quiz.post("/company/{company_id}/quiz/{quiz_id}/take-quiz", tags=["Quizzes"])
+async def take_quiz(company_id: int, quiz_id: int, questions: QuestionsListScheme, db:AsyncSession = Depends(get_db),
+                    current_user: UserResponse = Depends(get_current_user)):
+    quizzes_repository = QuizzRepository(database=db)
+    company_rating, system_rating = quizzes_repository.take_quiz(quiz_id=quiz_id, questions=questions,
+                                                                 company_id=company_id, user_id=current_user.id)
+    return company_rating, system_rating

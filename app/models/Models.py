@@ -23,7 +23,6 @@ class User(BaseModel):
     roles = Column(ARRAY(String))
     companies = relationship("Company", back_populates="owner")
     invites = relationship("Action", back_populates="user", cascade="all, delete-orphan")
-    rating = Column(Float, nullable=True, default=0)
 
     def to_dict(self):
 

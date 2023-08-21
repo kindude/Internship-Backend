@@ -6,14 +6,13 @@ from math import ceil
 
 from dotenv import load_dotenv
 from sqlalchemy import delete
-from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_
 
 from models.Models import Company
 
 
-from schemas.Company import CompanyScheme, CompanyResponse, CompanyDeleteScheme, CompanyListResponse
+from schemas.Company import CompanyScheme, CompanyResponse, CompanyListResponse
 from schemas.Quiz import DeleteScheme
 
 logger = logging.getLogger(__name__)

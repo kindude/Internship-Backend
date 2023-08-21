@@ -93,7 +93,6 @@ class UserRepository:
             if user:
                 return user
 
-
     async def get_users(self, page: int, per_page: int) -> UsersListResponse:
 
         total_count = await self.async_session.scalar(select(func.count()).select_from(User))

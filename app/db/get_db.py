@@ -14,14 +14,3 @@ async def get_db():
         await async_session.close()
 
 
-redis_pool = None
-
-async def init_redis():
-    global redis_pool
-    redis_pool = await aioredis.create_redis_pool("redis://localhost", encoding="utf-8")
-
-async def close_redis():
-    global redis_pool
-    if redis_pool:
-        redis_pool.close()
-        await redis_pool.wait_closed()

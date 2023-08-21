@@ -10,7 +10,6 @@ class OptionResponse(BaseModel):
 
 class OptionRequest(BaseModel):
     text:str
-    is_correct:bool
 
 class OptionScheme(OptionResponse):
     id:int
@@ -36,9 +35,17 @@ class QuestionScheme(QuestionResponse):
     quiz_id: int
     options: List[OptionScheme]
 
+class QuestionToTake(BaseModel):
+    id: int
+    question: str
+    quiz_id: int
+    option: OptionRequest
+
+
 
 class QuestionsListScheme(BaseModel):
-    questions: List[QuestionScheme]
+    questions: List[QuestionToTake]
+
 
 
 class QuizResponse(BaseModel):
@@ -59,8 +66,6 @@ class QuizRequest(BaseModel):
     frequency: int
     company_id: int
 
-class QuizScheme(QuizResponse):
-    id:int
 class QuizListResponse(BaseModel):
     quizzes: List[QuizResponse]
 
