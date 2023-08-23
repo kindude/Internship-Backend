@@ -1,11 +1,14 @@
+from typing import List
 
+from sqlalchemy import Column, Integer, String, Boolean, ARRAY, ForeignKey, DateTime, Float
 
-from sqlalchemy import Column, Integer, String, Boolean, ARRAY, ForeignKey
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
-from sqlalchemy.orm import relationship
-from sqlalchemy import Table, Column, ForeignKey
 from models.BaseModel import BaseModel
 from sqlalchemy import Column, Integer, String, ForeignKey, Enum
+from datetime import datetime
+
+
 
 class User(BaseModel):
     __tablename__ = 'users'
@@ -22,6 +25,7 @@ class User(BaseModel):
     invites = relationship("Action", back_populates="user", cascade="all, delete-orphan")
 
     def to_dict(self):
+
         return {
             'id': self.id,
             'username': self.username,
@@ -51,6 +55,7 @@ class Company(BaseModel):
     owner_id = Column(Integer, ForeignKey('users.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
     owner = relationship('User', back_populates='companies')
     requests = relationship("Action", back_populates="company", cascade="all, delete-orphan")
+    quizzes: Mapped[List["Quiz"]] = relationship(cascade="all, delete-orphan")
 
     def to_dict(self):
         return {
@@ -85,6 +90,52 @@ class Action(BaseModel):
 
         }
 
+class Quiz(BaseModel):
+    __tablename__ = "quizzes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, index=True, nullable=False)
+    description = Column(String, nullable=False)
+    frequency = Column(Integer, nullable=False)
+    company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"))
+    question: Mapped[List["Question"]] = relationship(cascade="all, delete-orphan")
 
 
+
+class Question(BaseModel):
+    __tablename__ = "questions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    text = Column(String, nullable=False)
+    quiz_id: Mapped[int] = mapped_column(ForeignKey("quizzes.id"))
+
+    option: Mapped[List["Option"]] = relationship(cascade="all, delete-orphan")
+
+class Option(BaseModel):
+    __tablename__ = "options"
+
+    id = Column(Integer, primary_key=True, index=True)
+    text = Column(String, nullable=False)
+    question_id: Mapped[int] = mapped_column(ForeignKey("questions.id"))
+    is_correct = Column(Boolean, default=False)
+
+class QuizResult(BaseModel):
+    __tablename__ = "quiz_results"
+
+    id = Column(Integer, primary_key=True, index=True)
+    company_id: Mapped[int] = mapped_column("companies.id")
+    user_id: Mapped[int] = mapped_column("users.id")
+    quiz_id: Mapped[int] = mapped_column("quizzes.id")
+    correct_answers = Column(Integer, nullable=False, default=0)
+    questions = Column(Integer, nullable=False, default=0)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+
+
+class CompanyRating(BaseModel):
+    __tablename__ = "company_ratings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    company_id: Mapped[int] = mapped_column("companies.id")
+    user_id: Mapped[int] = mapped_column("users.id")
+    rating = Column(Float, default=0, nullable=False)
 

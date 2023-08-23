@@ -7,7 +7,9 @@ from schemas.User import UserResponse
 
 from ENV import SECRET_KEY
 
+
 def create_token(user: UserResponse):
+
     expiration = datetime.datetime.utcnow() + datetime.timedelta(hours=24)
 
     payload = {

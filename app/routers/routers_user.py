@@ -60,8 +60,6 @@ async def update_user(id: int, request: UserScheme, db: AsyncSession = Depends(g
 async def delete_user(id: int, db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)) -> UserDeleteScheme:
     user_repository = UserRepository(database=db)
     if current_user.id != id:
-        print(current_user.id)
-        print(id)
         raise HTTPException(status_code=403, detail="You are not allowed to delete other users' profiles.")
 
     res = await user_repository.del_user(id=id)
@@ -99,7 +97,6 @@ async def get_user_by_username(username: str, db: AsyncSession = Depends(get_db)
 @router_user.post("/users/login", response_model=str, tags=["User"])
 async def user_login(request: UserLogin, db: AsyncSession = Depends(get_db)) -> str:
     user_repository = UserRepository(database=db)
-    print(request)
     token = await user_repository.authenticate_user(request=request)
     return token.token
 
