@@ -173,5 +173,5 @@ async def delete_option(company_id: int, option_id: int,
 async def take_quiz(company_id: int, quiz_id: int, questions: List[QuestionTakeQuiz], db:AsyncSession = Depends(get_db),
                     current_user: UserResponse = Depends(get_current_user)) -> dict:
     quizzes_repository = QuizzRepository(database=db)
-    ratings = await quizzes_repository.take_quiz(questions=questions, company_id=company_id, user_id=current_user.id)
+    ratings = await quizzes_repository.take_quiz(quiz_id=quiz_id, questions=questions, company_id=company_id, user_id=current_user.id)
     return ratings

@@ -1,6 +1,6 @@
 from typing import List
 
-from sqlalchemy import Column, Integer, String, Boolean, ARRAY, ForeignKey, DateTime, Float
+from sqlalchemy import Column, Integer, String, Boolean, ARRAY, ForeignKey, DateTime, Float, func
 
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
@@ -22,7 +22,7 @@ class User(BaseModel):
     roles = Column(ARRAY(String))
     companies = relationship("Company", back_populates="owner")
     invites = relationship("Action", back_populates="user", cascade="all, delete-orphan")
-
+    quiz_results = relationship("QuizResult", back_populates="user")
     def to_dict(self):
 
         return {
@@ -54,7 +54,7 @@ class Company(BaseModel):
     owner = relationship('User', back_populates='companies')
     requests = relationship("Action", back_populates="company", cascade="all, delete-orphan")
     quizzes: Mapped[List["Quiz"]] = relationship(cascade="all, delete-orphan")
-
+    quiz_results = relationship("QuizResult", back_populates="company")
     def to_dict(self):
         return {
             'id': self.id,
@@ -97,6 +97,7 @@ class Quiz(BaseModel):
     frequency = Column(Integer, nullable=False)
     company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"))
     question: Mapped[List["Question"]] = relationship(cascade="all, delete-orphan")
+    quiz_result = relationship("QuizResult", uselist=False, back_populates="quiz")
 
 
 class Question(BaseModel):
@@ -121,12 +122,18 @@ class Option(BaseModel):
 class QuizResult(BaseModel):
     __tablename__ = "quiz_results"
 
+
     id = Column(Integer, primary_key=True, index=True)
-    company_id: Mapped[int] = mapped_column("companies.id")
-    user_id: Mapped[int] = mapped_column("users.id")
-    quiz_id: Mapped[int] = mapped_column("quizzes.id")
+    company_id = Column(Integer, ForeignKey('companies.id'))
+    user_id = Column(Integer, ForeignKey('users.id'))
+    quiz_id = Column(Integer, ForeignKey('quizzes.id'))
     correct_answers = Column(Integer, nullable=False, default=0)
     questions = Column(Integer, nullable=False, default=0)
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    timestamp = Column(DateTime, default=func.utcnow())
+
+    # Связи с другими таблицами
+    company = relationship("Company", back_populates="quiz_results")
+    user = relationship("User", back_populates="quiz_results")
+    quiz = relationship("Quiz", back_populates="quiz_result")
 
 

@@ -7,6 +7,7 @@ from sqlalchemy import select, delete, and_
 from models.Models import Quiz, Question, Option, QuizResult, User
 from repositories.action_repository import logger
 from repositories.quiz_result_repository import QuizResultRepository
+from repositories.redis_repository import RedisRepository
 from schemas.Option import OptionResponse, OptionAddRequest, OptionUpdateScheme
 from schemas.Question import QuestionListResponse, QuestionUpdateScheme, QuestionTakeQuiz
 from schemas.Quiz import QuizResponse, QuestionResponse, QuizListResponse, DeleteScheme, QuizAddRequest, \
@@ -245,7 +246,7 @@ class QuizzRepository:
         except Exception as e:
             print(f"An error occurred while deleting option: {e}")
 
-    async def take_quiz(self, questions: List[QuestionTakeQuiz], company_id: int, user_id: int) -> dict:
+    async def take_quiz(self, quiz_id: int, questions: List[QuestionTakeQuiz], company_id: int, user_id: int) -> dict:
         try:
             correct_answers = 0
             total_questions = len(questions)
@@ -262,7 +263,8 @@ class QuizzRepository:
                 company_id=company_id,
                 correct_answers=correct_answers,
                 questions=total_questions,
-                timestamp=datetime.utcnow()
+                timestamp=datetime.utcnow(),
+                quiz_id=quiz_id
             )
 
             self.async_session.add(quiz_result)
@@ -271,6 +273,22 @@ class QuizzRepository:
             quiz_result_rep = QuizResultRepository(database=self.async_session)
 
             user_averages = await quiz_result_rep.calculate_user_averages(user_id, company_id)
+
+            quiz_data = {
+                "user_id": user_id,
+                "company_id": company_id,
+                "quiz_id": quiz_id,
+                "correct_answers": correct_answers,
+                "total_questions": total_questions,
+                "time": datetime.utcnow().isoformat()
+            }
+
+            try:
+                async with RedisRepository() as redis_rep:
+                    await redis_rep.save_quiz(quiz_data)
+                    print("Quiz data saved to Redis")
+            except Exception as e:
+                print(f"An error occurred while using RedisRepository: {e}")
 
             return {
                 "correct_answers": correct_answers,
