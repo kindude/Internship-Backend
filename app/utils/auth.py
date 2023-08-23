@@ -64,7 +64,6 @@ def get_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> 
 
 
 async def get_current_user(token: str = Depends(get_token), db: AsyncSession = Depends(get_db)) -> UserResponse:
-    print(f"Token {token}")
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"], options={"verify_signature": False})
         username: str = payload.get("username")
@@ -74,7 +73,6 @@ async def get_current_user(token: str = Depends(get_token), db: AsyncSession = D
 
     except JWTError:
         payload = jwt.decode(token, CLIENT_SECRET, algorithms=["RS256"], audience=API_AUDIENCE, options={"verify_signature": False})
-        print(payload)
         email = payload.get('email')
 
 

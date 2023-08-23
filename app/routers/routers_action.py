@@ -206,6 +206,7 @@ async def get_users_in_company(company_id: int, db: AsyncSession = Depends(get_d
     else:
         raise HTTPException(status_code=404, detail="No users in company found")
 
+
 @router_action.get("/companies/user/in", tags=["Actions_company"], response_model=CompanyListResponse)
 async def get_users_in_company(db: AsyncSession = Depends(get_db), page: int = Query(1, alias="page"), per_page: int = Query(5), current_user: UserResponse = Depends(get_current_user)):
     action_repository = ActionRepository(database=db)

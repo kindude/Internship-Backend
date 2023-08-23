@@ -53,9 +53,10 @@ class ActionRepository:
 
     async def accept_invite(self, request_: ActionScheme) -> Action:
         try:
-            invite = await self.async_session.get(Action, request_.id)
+            query = select(Action).filter(Action.id == request_.id)
+            invite = await self.async_session.execute(query)
             invite = invite.scalar_one_or_none()
-            if invite is not None and invite.status == "PENDING":
+            if invite and invite.status == "PENDING":
                 invite.status = "ACCEPTED"
                 invite.type_of_action = "MEMBER"
                 await self.async_session.commit()
@@ -157,7 +158,8 @@ class ActionRepository:
         try:
             query = select(Action).filter(and_(Action.user_id == user_id, Action.type_of_action == "INVITE"))
             invites = await self.async_session.execute(query)
-            if invites is None:
+
+            if invites:
                 invites_list = [action_to_scheme(invite) for invite in invites.scalars().all()]
                 return ActionListResponse(actions=invites_list)
         except Exception as e:
@@ -165,7 +167,7 @@ class ActionRepository:
             raise e
 
     @staticmethod
-    def company_to_response(self, company: Company) -> CompanyResponse:
+    def company_to_response(company: Company) -> CompanyResponse:
         return CompanyResponse(
             id=company.id,
             name=company.name,
@@ -182,7 +184,7 @@ class ActionRepository:
         try:
             query = select(Company).join(Action).filter(and_(Action.type_of_action == "MEMBER", Action.user_id == current_user_id)).order_by(Company.id).offset(offset)
             companies = await self.async_session.execute(query)
-            if companies is None:
+            if companies:
                 company_list = [self.company_to_response(company) for company in companies.scalars().all()]
                 total_count = len(company_list)
                 total_pages = ceil(total_count / per_page)
@@ -196,7 +198,6 @@ class ActionRepository:
         try:
             query = select(Action).filter(and_(Action.user_id == user_id, Action.type_of_action == "REQUEST"))
             requests = await self.async_session.execute(query)
-            print(requests)
             if requests is None:
                 requests_list = [action_to_scheme(request) for request in requests.scalars().all()]
                 return ActionListResponse(actions=requests_list)
@@ -284,7 +285,6 @@ class ActionRepository:
         except Exception as e:
             print(f"An error occurred while getting users in company: {e}")
             raise e
-
 
     async def add_admin(self, user_id:int, company_id:int) -> UserResponseNoPass:
         try:

@@ -8,9 +8,12 @@ from db.get_db import get_db
 from repositories.action_repository import ActionRepository
 from repositories.company_repository import CompanyRepository
 from repositories.quizzes_repository import QuizzRepository
+from schemas.Option import OptionUpdateScheme, OptionResponse
+from schemas.Question import QuestionListResponse, QuestionUpdateScheme
 
-from schemas.Quiz import QuizResponse, QuizRequest, QuizListResponse, QuestionResponse, QuestionScheme, \
-    OptionScheme, QuestionListResponse, QuestionsListScheme
+from schemas.Quiz import QuizResponse, QuizListResponse, QuestionResponse, QuizAddRequest, QuizUpdateScheme, \
+    DeleteScheme
+
 from schemas.User import UserResponse
 from utils.auth import get_current_user
 
@@ -19,7 +22,7 @@ router_quiz = APIRouter()
 
 
 @router_quiz.post("/company/create/quiz", response_model=QuizResponse, tags=["Quizzes"])
-async def create_quiz(quiz: QuizRequest, db:AsyncSession = Depends(get_db), current_user:UserResponse = Depends(get_current_user)):
+async def create_quiz(quiz: QuizAddRequest, db:AsyncSession = Depends(get_db), current_user:UserResponse = Depends(get_current_user)):
     company_repository = CompanyRepository(database=db)
     company = await company_repository.get_company(id=quiz.company_id)
     action_repository = ActionRepository(database=db)
@@ -37,19 +40,17 @@ async def create_quiz(quiz: QuizRequest, db:AsyncSession = Depends(get_db), curr
 
 @router_quiz.get("/company/{company_id}/get-quiz/{quiz_id}", response_model=QuizResponse, tags=["Quizzes"])
 async def get_quiz(company_id:int, quiz_id:int ,  db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)):
-    company_repository = CompanyRepository(database=db)
-    company = await company_repository.get_company(id=company_id)
     action_repository = ActionRepository(database=db)
     member = await action_repository.if_member(user_id=current_user.id, company_id=company_id)
-    quiz_repository = QuizzRepository(database=db)
     if member:
+        quiz_repository = QuizzRepository(database=db)
         retrieved_quiz = await quiz_repository.get_quiz(id=quiz_id)
         return retrieved_quiz
     raise HTTPException(status_code=403, detail="You are not a member of the company")
 
 
 @router_quiz.get("/company/{company_id}/get-quizzes/", response_model=QuizListResponse, tags=["Quizzes"])
-async def get_quizzes(company_id:int,  db:AsyncSession = Depends(get_db), current_user:UserResponse = Depends(get_current_user)):
+async def get_quizzes(company_id: int,  db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)):
     action_repository = ActionRepository(database=db)
     quiz_repository = QuizzRepository(database=db)
     if action_repository.if_member(user_id=current_user.id, company_id=company_id):
@@ -59,7 +60,7 @@ async def get_quizzes(company_id:int,  db:AsyncSession = Depends(get_db), curren
     raise HTTPException(status_code=404, detail="None quizzes")
 
 @router_quiz.get("/company/{company_id}/quiz/{quiz_id}/questions", response_model=QuestionListResponse, tags=["Quizzes"])
-async def get_questions(company_id:int, quiz_id:int, db:AsyncSession =Depends(get_db), current_user:UserResponse =Depends(get_current_user)):
+async def get_questions(company_id: int, quiz_id: int, db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)):
     action_repository = ActionRepository(database=db)
     quiz_repository = QuizzRepository(database=db)
     if action_repository.if_member(user_id=current_user.id, company_id=company_id):
@@ -69,8 +70,8 @@ async def get_questions(company_id:int, quiz_id:int, db:AsyncSession =Depends(ge
         raise HTTPException(status_code=404, detail="None questions for this quiz")
 
 
-@router_quiz.post("/company/{company_id}/quiz/update", response_model=QuizListResponse, tags=["Quizzes"])
-async def update_quiz(company_id:int, quiz:QuizResponse, db:AsyncSession = Depends(get_db), current_user:UserResponse =Depends(get_current_user)):
+@router_quiz.post("/company/{company_id}/quiz/update", response_model=QuizResponse, tags=["Quizzes"])
+async def update_quiz(company_id: int, quiz:QuizUpdateScheme, db:AsyncSession = Depends(get_db), current_user:UserResponse =Depends(get_current_user)):
     company_repository = CompanyRepository(database=db)
     company = await company_repository.get_company(id=company_id)
     action_repository = ActionRepository(database=db)
@@ -83,9 +84,10 @@ async def update_quiz(company_id:int, quiz:QuizResponse, db:AsyncSession = Depen
             return updated_quiz
         raise HTTPException(status_code=403, detail="You are not allowed to update quizzes")
 
+
 @router_quiz.post("/company/{company_id}/quiz/question/update", response_model=QuestionResponse, tags=["Quizzes"])
-async def update_question(company_id:int, question:QuestionScheme,
-                          db:AsyncSession = Depends(get_db), current_user:UserResponse =Depends(get_current_user)):
+async def update_question(company_id: int, question: QuestionUpdateScheme,
+                          db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)):
     company_repository = CompanyRepository(database=db)
     company = await company_repository.get_company(id=company_id)
     action_repository = ActionRepository(database=db)
@@ -98,8 +100,8 @@ async def update_question(company_id:int, question:QuestionScheme,
             return updated_question
         raise HTTPException(status_code=403, detail="You are not allowed to update questions")
 
-@router_quiz.post("/company/{company_id}/quiz/question/option/update", response_model=QuestionResponse, tags=["Quizzes"])
-async def update_option(company_id:int, option:OptionScheme,
+@router_quiz.post("/company/{company_id}/quiz/question/option/update", response_model=OptionResponse, tags=["Quizzes"])
+async def update_option(company_id: int, option: OptionUpdateScheme,
                           db:AsyncSession = Depends(get_db), current_user:UserResponse =Depends(get_current_user)):
     company_repository = CompanyRepository(database=db)
     company = await company_repository.get_company(id=company_id)
@@ -113,7 +115,8 @@ async def update_option(company_id:int, option:OptionScheme,
             return updated_option
         raise HTTPException(status_code=403, detail="You are not allowed to update options")
 
-@router_quiz.post("/company/{company_id}/quiz/{quiz_id}/delete", response_model=QuestionResponse,
+
+@router_quiz.post("/company/{company_id}/quiz/{quiz_id}/delete", response_model=DeleteScheme,
                       tags=["Quizzes"])
 async def delete_quiz(company_id: int, quiz_id:int,
                         db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)):
@@ -130,7 +133,7 @@ async def delete_quiz(company_id: int, quiz_id:int,
         raise HTTPException(status_code=403, detail="You are not allowed to delete quizzes")
 
 
-@router_quiz.post("/company/{company_id}/quiz/{question_id}/delete", response_model=QuestionResponse,
+@router_quiz.post("/company/{company_id}/quiz/question/{question_id}/delete", response_model=DeleteScheme,
                   tags=["Quizzes"])
 async def delete_question(company_id: int, question_id:int,
                         db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)):
@@ -142,14 +145,14 @@ async def delete_question(company_id: int, question_id:int,
         admin_ids = [admin.id for admin in admins.users]
         quiz_repository = QuizzRepository(database=db)
         if company.owner_id == current_user.id or current_user.id in admin_ids:
-            deleted_question = await quiz_repository.delete_question(question_id==question_id)
+            deleted_question = await quiz_repository.delete_question(question_id=question_id)
             return deleted_question
         raise HTTPException(status_code=403, detail="You are not allowed to delete question")
 
 
-@router_quiz.post("/company/{company_id}/quiz/{option_id}/delete", response_model=QuestionResponse,
+@router_quiz.post("/company/{company_id}/quiz/option/{option_id}/delete", response_model=DeleteScheme,
                   tags=["Quizzes"])
-async def delete_question(company_id: int, option_id:int,
+async def delete_option(company_id: int, option_id: int,
                         db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)):
     company_repository = CompanyRepository(database=db)
     company = await company_repository.get_company(id=company_id)
@@ -159,13 +162,13 @@ async def delete_question(company_id: int, option_id:int,
         admin_ids = [admin.id for admin in admins.users]
         quiz_repository = QuizzRepository(database=db)
         if company.owner_id == current_user.id or current_user.id in admin_ids:
-            deleted_question = await quiz_repository.delete_option(option_id==option_id)
+            deleted_question = await quiz_repository.delete_option(option_id=option_id)
             return deleted_question
         raise HTTPException(status_code=403, detail="You are not allowed to delete option")
 
 
 @router_quiz.post("/company/{company_id}/quiz/{quiz_id}/take-quiz", tags=["Quizzes"])
-async def take_quiz(company_id: int, quiz_id: int, questions: QuestionsListScheme, db:AsyncSession = Depends(get_db),
+async def take_quiz(company_id: int, quiz_id: int, questions: QuestionListResponse, db:AsyncSession = Depends(get_db),
                     current_user: UserResponse = Depends(get_current_user)):
     quizzes_repository = QuizzRepository(database=db)
     company_rating, system_rating = quizzes_repository.take_quiz(quiz_id=quiz_id, questions=questions,

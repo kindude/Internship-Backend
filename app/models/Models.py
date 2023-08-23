@@ -101,6 +101,7 @@ class Quiz(BaseModel):
     question: Mapped[List["Question"]] = relationship(cascade="all, delete-orphan")
 
 
+
 class Question(BaseModel):
     __tablename__ = "questions"
 

@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from repositories.company_repository import CompanyRepository
 
 from schemas.Company import CompanyResponse, CompanyScheme, CompanyDeleteScheme, CompanyListResponse, CompanySchemeRequest
+from schemas.Quiz import DeleteScheme
 from schemas.User import  UserResponse
 from db.get_db import get_db
 
@@ -41,14 +42,13 @@ async def update_company(id: int, request: CompanyScheme, db: AsyncSession = Dep
     return company_updated
 
 
-@router_companies.post("/companies/{id}", response_model=CompanyDeleteScheme, tags=["Company"])
-async def delete_company(id: int, request: CompanyScheme, db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)) -> CompanyDeleteScheme:
+@router_companies.post("/companies/{id}", response_model=DeleteScheme, tags=["Company"])
+async def delete_company(id: int, request: CompanyScheme, db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)) -> DeleteScheme:
     company_repository = CompanyRepository(database=db)
-    print(current_user.id)
     if current_user.id != request.owner_id:
         raise HTTPException(status_code=403, detail="You are not allowed to delete other companies ")
     company_deleted = await company_repository.delete_company(id)
-    print(company_deleted)
+
     return company_deleted
 
 
@@ -66,6 +66,7 @@ async def get_company(id:int, db: AsyncSession = Depends(get_db)) -> CompanyResp
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
     return company
+
 
 @router_companies.get("/companies/my/companies", response_model=CompanyListResponse, tags=["Company"])
 async def get_my_companies(page: int = Query(1, alias="page"), per_page: int = Query(5), db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)) -> CompanyListResponse:

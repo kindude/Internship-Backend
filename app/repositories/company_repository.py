@@ -33,6 +33,7 @@ class CompanyRepository:
             await self.async_session.refresh(company, attribute_names=["id"])
             logger.info(f"New user created: {request.name}")
             return company
+
         except Exception as e:
             print(f"An error occurred while creating the user: {e}")
             raise e
