@@ -17,6 +17,14 @@ class QuestionResponse(BaseModel):
     options: List[OptionResponse]
 
 
+class QuestionTakeQuiz(BaseModel):
+    id: int
+    text: str
+    quiz_id: int
+    options: OptionResponse
+
+
+
 class QuestionUpdateScheme(BaseModel):
     id: int
     text: str

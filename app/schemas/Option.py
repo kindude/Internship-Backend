@@ -11,7 +11,6 @@ class OptionAddRequest(BaseModel):
 class OptionResponse(BaseModel):
     id: int
     text: str
-    question_id: int
 
 
 class OptionUpdateScheme(BaseModel):
