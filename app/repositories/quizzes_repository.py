@@ -249,13 +249,12 @@ class QuizzRepository:
         try:
             correct_answers = 0
             total_questions = len(questions)
-
+            query = select(Option).filter(Option.is_correct)
+            correct_options = await self.async_session.execute(query)
+            correct_options = correct_options.scalars().all()
+            correct_options_text = {option.text for option in correct_options}
             for question in questions:
-                query = select(Option).filter(and_(Option.question_id == question.id, Option.is_correct))
-                correct_option = await self.async_session.execute(query)
-                correct_option = correct_option.scalar_one_or_none()
-
-                if correct_option and correct_option.text == question.option.text:
+                if question.option.text in correct_options_text:
                     correct_answers += 1
 
             quiz_result = QuizResult(

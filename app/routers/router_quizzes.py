@@ -101,6 +101,7 @@ async def update_question(company_id: int, question: QuestionUpdateScheme,
             return updated_question
         raise HTTPException(status_code=403, detail="You are not allowed to update questions")
 
+
 @router_quiz.post("/company/{company_id}/quiz/question/option/update", response_model=OptionResponse, tags=["Quizzes"])
 async def update_option(company_id: int, option: OptionUpdateScheme,
                           db:AsyncSession = Depends(get_db), current_user:UserResponse =Depends(get_current_user)):
