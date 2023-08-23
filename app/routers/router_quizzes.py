@@ -1,4 +1,5 @@
 import logging
+from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,7 +10,7 @@ from repositories.action_repository import ActionRepository
 from repositories.company_repository import CompanyRepository
 from repositories.quizzes_repository import QuizzRepository
 from schemas.Option import OptionUpdateScheme, OptionResponse
-from schemas.Question import QuestionListResponse, QuestionUpdateScheme
+from schemas.Question import QuestionListResponse, QuestionUpdateScheme, QuestionTakeQuiz
 
 from schemas.Quiz import QuizResponse, QuizListResponse, QuestionResponse, QuizAddRequest, QuizUpdateScheme, \
     DeleteScheme
@@ -168,9 +169,8 @@ async def delete_option(company_id: int, option_id: int,
 
 
 @router_quiz.post("/company/{company_id}/quiz/{quiz_id}/take-quiz", tags=["Quizzes"])
-async def take_quiz(company_id: int, quiz_id: int, questions: QuestionListResponse, db:AsyncSession = Depends(get_db),
-                    current_user: UserResponse = Depends(get_current_user)):
+async def take_quiz(company_id: int, quiz_id: int, questions: List[QuestionTakeQuiz], db:AsyncSession = Depends(get_db),
+                    current_user: UserResponse = Depends(get_current_user)) -> dict:
     quizzes_repository = QuizzRepository(database=db)
-    company_rating, system_rating = quizzes_repository.take_quiz(quiz_id=quiz_id, questions=questions,
-                                                                 company_id=company_id, user_id=current_user.id)
-    return company_rating, system_rating
+    ratings = await quizzes_repository.take_quiz(questions=questions, company_id=company_id, user_id=current_user.id)
+    return ratings

@@ -1,12 +1,14 @@
+from datetime import datetime
 from typing import List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete, and_
 
-from models.Models import Quiz, Question, Option, QuizResult, User, CompanyRating
+from models.Models import Quiz, Question, Option, QuizResult, User
 from repositories.action_repository import logger
+from repositories.quiz_result_repository import QuizResultRepository
 from schemas.Option import OptionResponse, OptionAddRequest, OptionUpdateScheme
-from schemas.Question import QuestionListResponse, QuestionUpdateScheme
+from schemas.Question import QuestionListResponse, QuestionUpdateScheme, QuestionTakeQuiz
 from schemas.Quiz import QuizResponse, QuestionResponse, QuizListResponse, DeleteScheme, QuizAddRequest, \
     QuizUpdateScheme
 
@@ -243,6 +245,44 @@ class QuizzRepository:
         except Exception as e:
             print(f"An error occurred while deleting option: {e}")
 
-    async def take_quiz(self):
-        pass
+    async def take_quiz(self, questions: List[QuestionTakeQuiz], company_id: int, user_id: int) -> dict:
+        try:
+            correct_answers = 0
+            total_questions = len(questions)
+
+            for question in questions:
+                query = select(Option).filter(and_(Option.question_id == question.id, Option.is_correct))
+                correct_option = await self.async_session.execute(query)
+                correct_option = correct_option.scalar_one_or_none()
+
+                if correct_option and correct_option.text == question.option.text:
+                    correct_answers += 1
+
+            quiz_result = QuizResult(
+                user_id=user_id,
+                company_id=company_id,
+                correct_answers=correct_answers,
+                questions=total_questions,
+                timestamp=datetime.utcnow()
+            )
+
+            self.async_session.add(quiz_result)
+            await self.async_session.commit()
+
+            quiz_result_rep = QuizResultRepository(database=self.async_session)
+
+            user_averages = await quiz_result_rep.calculate_user_averages(user_id, company_id)
+
+            return {
+                "correct_answers": correct_answers,
+                "total_questions": total_questions,
+                **user_averages
+            }
+
+        except Exception as e:
+            print(f"An error occurred while taking the quiz: {e}")
+
+
+
+
 

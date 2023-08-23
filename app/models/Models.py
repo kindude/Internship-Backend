@@ -9,7 +9,6 @@ from sqlalchemy import Column, Integer, String, ForeignKey, Enum
 from datetime import datetime
 
 
-
 class User(BaseModel):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
@@ -40,7 +39,6 @@ class User(BaseModel):
 
     def __repr__(self):
         return f"<User(id={self.id}, username={self.username}, email={self.email})>"
-
 
 
 class Company(BaseModel):
@@ -79,7 +77,6 @@ class Action(BaseModel):
     company = relationship("Company", back_populates="requests")
     type_of_action = Column(Enum("REQUEST", "INVITE", "MEMBER", name="type_of_action"), nullable=False)
 
-
     def to_dict(self):
         return {
             'id': self.id,
@@ -89,6 +86,7 @@ class Action(BaseModel):
             'type': self.type,
 
         }
+
 
 class Quiz(BaseModel):
     __tablename__ = "quizzes"
@@ -101,7 +99,6 @@ class Quiz(BaseModel):
     question: Mapped[List["Question"]] = relationship(cascade="all, delete-orphan")
 
 
-
 class Question(BaseModel):
     __tablename__ = "questions"
 
@@ -111,6 +108,7 @@ class Question(BaseModel):
 
     option: Mapped[List["Option"]] = relationship(cascade="all, delete-orphan")
 
+
 class Option(BaseModel):
     __tablename__ = "options"
 
@@ -118,6 +116,7 @@ class Option(BaseModel):
     text = Column(String, nullable=False)
     question_id: Mapped[int] = mapped_column(ForeignKey("questions.id"))
     is_correct = Column(Boolean, default=False)
+
 
 class QuizResult(BaseModel):
     __tablename__ = "quiz_results"
@@ -130,12 +129,4 @@ class QuizResult(BaseModel):
     questions = Column(Integer, nullable=False, default=0)
     timestamp = Column(DateTime, default=datetime.utcnow)
 
-
-class CompanyRating(BaseModel):
-    __tablename__ = "company_ratings"
-
-    id = Column(Integer, primary_key=True, index=True)
-    company_id: Mapped[int] = mapped_column("companies.id")
-    user_id: Mapped[int] = mapped_column("users.id")
-    rating = Column(Float, default=0, nullable=False)
 
