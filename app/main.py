@@ -6,10 +6,13 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from ENV import host, port
 from fastapi.middleware.cors import CORSMiddleware
+
+from routers.router_export import router_export
 from  routers.routers_company import router_companies
 from routers.routers_action import router_action
 from routers.routers_user import router_user
 from routers.router_quizzes import router_quiz
+
 app = FastAPI()
 
 origins = ["http://localhost:3000", "http://localhost:3001"]
@@ -28,6 +31,7 @@ app.include_router(router_companies)
 app.include_router(router_user)
 app.include_router(router_action)
 app.include_router(router_quiz)
+app.include_router(router_export)
 
 
 

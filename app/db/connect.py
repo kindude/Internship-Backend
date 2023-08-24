@@ -19,11 +19,3 @@ async def connect_Postgres():
     return async_session()
 
 
-@asynccontextmanager
-async def connect_Redis():
-    try:
-        redis_client = redis.Redis(host='localhost', port=6379, decode_responses=True)
-        yield redis_client
-    except Exception as e:
-        print(f"An error occurred while connecting to Redis: {e}")
-

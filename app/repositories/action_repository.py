@@ -39,9 +39,10 @@ class ActionRepository:
             print(f"An error occurred while creating the invite: {e}")
             raise e
 
-    async def cancel_invite(self, request_: ActionResponse) -> Action:
+    async def cancel_invite(self, request_: ActionScheme) -> Action:
         try:
-            invite = await self.async_session.get(Action, request_.id)
+            query = select(Action).filter(Action.id == request_.id)
+            invite = await self.async_session.execute(query)
             invite = invite.scalar_one_or_none()
             if invite is not None:
                 invite.status = "CANCELLED"
@@ -68,7 +69,8 @@ class ActionRepository:
 
     async def reject_invite(self, request_: ActionScheme) -> Action:
         try:
-            invite = await self.async_session.get(Action, request_.id)
+            query = select(Action).filter(Action.id == request_.id)
+            invite = await self.async_session.execute(query)
             invite = invite.scalar_one_or_none()
             if invite and invite.status == "PENDING":
                 invite.status = "REJECTED"
@@ -92,7 +94,8 @@ class ActionRepository:
 
     async def cancel_request(self, request_: ActionScheme) -> Action:
         try:
-            request = await self.async_session.get(Action, request_.id)
+            query = select(Action).filter(Action.id == request_.id)
+            request = await self.async_session.execute(query)
             request = request.scalar_one_or_none()
             if request and request.status == "PENDING":
                 request.status = "CANCELLED"
@@ -105,7 +108,8 @@ class ActionRepository:
 
     async def accept_request(self, request_: ActionScheme) -> Action:
         try:
-            request = await self.async_session.get(Action, request_.id)
+            query = select(Action).filter(Action.id == request_.id)
+            request = await self.async_session.execute(query)
             request = request.scalar_one_or_none()
             if request and request.status == "PENDING":
                 request.status = "ACCEPTED"
@@ -118,9 +122,10 @@ class ActionRepository:
             print(f"An error occured while accepting the request: {e}")
             raise e
 
-    async def reject_request(self, request_:ActionResponse):
+    async def reject_request(self, request_: ActionScheme):
         try:
-            request = await self.async_session.get(Action, request_.id)
+            query = select(Action).filter(Action.id == request_.id)
+            request = await self.async_session.execute(query)
             request = request.scalar_one_or_none()
             request.status = "REJECTED"
             await self.async_session.commit()
