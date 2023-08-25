@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from models.BaseModel import BaseModel
+from pydantic import BaseModel
 
 
 class QuizResultAddRequest(BaseModel):

@@ -21,7 +21,7 @@ class QuestionTakeQuiz(BaseModel):
     id: int
     text: str
     quiz_id: int
-    options: OptionResponse
+    option: OptionResponse
 
 
 

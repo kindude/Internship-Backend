@@ -1,7 +1,7 @@
 import aioredis
-from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncSession, async_session
+import redis
 
+from ENV import REDIS_PORT, REDIS_HOST
 from db.connect import connect_Postgres
 
 
@@ -12,5 +12,10 @@ async def get_db():
             yield session
     finally:
         await async_session.close()
+
+
+async def get_redis():
+    return redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
+
 
 
