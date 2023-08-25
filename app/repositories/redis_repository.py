@@ -10,7 +10,9 @@ class RedisRepository:
         self.redis_client = None
 
     async def connect(self):
+
         self.redis_client = await get_redis()
+
 
     async def disconnect(self):
         if self.redis_client:
@@ -18,7 +20,9 @@ class RedisRepository:
 
     async def save_quiz(self, quiz_data: dict):
         await self.connect()
+
         redis_key = f"quiz_result:{quiz_data['company_id']}:{quiz_data['user_id']}:{quiz_data['quiz_id']}:{uuid.uuid4()}"
+
         self.redis_client.hmset(redis_key, quiz_data)
         expiration_time_seconds = int(timedelta(hours=48).total_seconds())
         self.redis_client.expire(redis_key, expiration_time_seconds)
