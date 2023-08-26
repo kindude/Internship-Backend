@@ -1,7 +1,8 @@
 import aioredis
 import redis
 
-from ENV import REDIS_HOST, REDIS_PORT
+from ENV import REDIS_PORT, REDIS_HOST
+
 from db.connect import connect_Postgres
 
 
@@ -16,5 +17,6 @@ async def get_db():
 
 async def get_redis():
     return redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
+
 
 
