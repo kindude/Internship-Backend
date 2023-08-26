@@ -8,6 +8,7 @@ from db.get_db import get_db
 
 from repositories.action_repository import ActionRepository
 from repositories.company_repository import CompanyRepository
+from repositories.quiz_result_repository import QuizResultRepository
 from repositories.quizzes_repository import QuizzRepository
 from schemas.Option import OptionUpdateScheme, OptionResponse
 from schemas.Question import QuestionListResponse, QuestionUpdateScheme, QuestionTakeQuiz
@@ -175,3 +176,44 @@ async def take_quiz(company_id: int, quiz_id: int, questions: List[QuestionTakeQ
     quizzes_repository = QuizzRepository(database=db)
     ratings = await quizzes_repository.take_quiz(quiz_id=quiz_id, questions=questions, company_id=company_id, user_id=current_user.id)
     return ratings
+
+
+
+@router_quiz.get("company/{company_id}/users/averages", tags=["User"])
+async def get_all_users_averages(company_id:int, db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)):
+    company_repository = CompanyRepository(database=db)
+    company = await company_repository.get_company(id=company_id)
+    action_repository = ActionRepository(database=db)
+    admins = await action_repository.get_all_admins(company_id=company_id, per_page=5, page=1)
+    if admins:
+        admin_ids = [admin.id for admin in admins.users]
+        if company.owner_id == current_user.id or current_user.id in admin_ids:
+            quiz_result_repository = QuizResultRepository(database=db)
+            averages = await quiz_result_repository.get_all_users_averages()
+            return averages
+
+@router_quiz.get("company/{company_id}/users/{user_id}/quizzes/averages", tags=["User"], )
+async def get_user_quiz_averages(company_id:int, user_id: int, db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)):
+    company_repository = CompanyRepository(database=db)
+    company = await company_repository.get_company(id=company_id)
+    action_repository = ActionRepository(database=db)
+    admins = await action_repository.get_all_admins(company_id=company_id, per_page=5, page=1)
+    if admins:
+        admin_ids = [admin.id for admin in admins.users]
+        if company.owner_id == current_user.id or current_user.id in admin_ids:
+            quiz_result_repository = QuizResultRepository(database=db)
+            user_averages = await quiz_result_repository.get_user_quiz_averages(user_id)
+            return user_averages
+
+@router_quiz.get("company/{company_id}/users/last-completions", tags=["Company"])
+async def get_company_users_last_completion(company_id: int, db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)):
+    company_repository = CompanyRepository(database=db)
+    company = await company_repository.get_company(id=company_id)
+    action_repository = ActionRepository(database=db)
+    admins = await action_repository.get_all_admins(company_id=company_id, per_page=5, page=1)
+    if admins:
+        admin_ids = [admin.id for admin in admins.users]
+        if company.owner_id == current_user.id or current_user.id in admin_ids:
+            quiz_result_repository = QuizResultRepository(database=db)
+            last_completions = await quiz_result_repository.get_company_users_last_completion(company_id=company_id)
+            return last_completions
