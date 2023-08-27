@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Query
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from repositories.notification_repository import NotificationRepository
 from repositories.quiz_result_repository import QuizResultRepository
 from repositories.user_repository import UserRepository
 
@@ -122,6 +123,11 @@ async def get_last_quiz_completions(db: AsyncSession = Depends(get_db), current_
     return last_completions
 
 
+@router_user.get("/user/notifications", tags=["User"])
+async def get_user_notifications(db:AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)):
+    notif_repo = NotificationRepository(session=db)
+    notifications = await notif_repo.get_notifications(user_id=current_user.id)
+    return notifications
 
 
 
