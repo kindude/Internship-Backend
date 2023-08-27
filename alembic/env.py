@@ -10,7 +10,7 @@ from sqlalchemy import pool
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 # Add the 'app' folder to sys.path
-from app.models.Models import User, Company, Quiz, Question, Option
+from app.models.Models import User, Company, Quiz, Question, Option, QuizResult, Notification
 from app.models.BaseModel import Base
 
 

@@ -1,7 +1,10 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from models.Models import Notification
+from models.Models import Notification, Quiz
+from repositories.action_repository import ActionRepository
+from repositories.company_repository import CompanyRepository
 
 
 class NotificationRepository:
@@ -26,11 +29,18 @@ class NotificationRepository:
         notification = notification.scalar_one_or_none()
         return notification
 
-    async def get_notifications(self, user_id:int):
-        query = select(Notification).filter(Notification.user_id == user_id)
-        notifications = await self.session.execute(query)
-        notifications = notifications.scalars().all()
-        return notifications
+    async def get_notifications(self, user_id: int, company_id: int):
+        action_repo = ActionRepository(database=self.session)
+        if action_repo.if_member(user_id=user_id, company_id=company_id):
+            query = (
+                select(Notification)
+                .join(Quiz)
+                .options(selectinload(Notification.quiz))
+                .where(Quiz.company_id == company_id)
+            )
+            notifications = await self.session.execute(query)
+            notifications = notifications.scalars().all()
+            return notifications
 
     async def update_notification(self, notification_id: int, status: str, text: str):
         notification = await self.get_notification(notification_id=notification_id)

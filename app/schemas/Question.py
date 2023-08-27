@@ -9,6 +9,10 @@ class QuestionAddRequest(BaseModel):
     question: str
     options: List[OptionAddRequest]
 
+class QuestionUpdateScheme(BaseModel):
+    id:int
+    text:str
+
 
 class QuestionResponse(BaseModel):
     id: int
@@ -24,10 +28,10 @@ class QuestionTakeQuiz(BaseModel):
     option: OptionResponse
 
 
+class QuestionListTakeQuiz(BaseModel):
+    questions: List[QuestionTakeQuiz]
 
-class QuestionUpdateScheme(BaseModel):
-    id: int
-    text: str
+
 
 
 class QuestionListResponse(BaseModel):
