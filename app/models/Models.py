@@ -4,7 +4,7 @@ from sqlalchemy import Column, Integer, String, Boolean, ARRAY, ForeignKey, Date
 
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
-from models.BaseModel import BaseModel
+from app.models.BaseModel import BaseModel
 from sqlalchemy import Column, Integer, String, ForeignKey, Enum
 from datetime import datetime
 
@@ -130,8 +130,6 @@ class QuizResult(BaseModel):
     correct_answers = Column(Integer, nullable=False, default=0)
     questions = Column(Integer, nullable=False, default=0)
     timestamp = Column(DateTime, default=func.utcnow())
-
-    # Связи с другими таблицами
     company = relationship("Company", back_populates="quiz_results")
     user = relationship("User", back_populates="quiz_results")
     quiz = relationship("Quiz", back_populates="quiz_result")

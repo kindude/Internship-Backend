@@ -18,4 +18,3 @@ async def connect_Postgres():
     async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
     return async_session()
 
-
