@@ -4,7 +4,7 @@ from sqlalchemy import Column, Integer, String, Boolean, ARRAY, ForeignKey, Date
 
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
-from app.models.BaseModel import BaseModel
+from models.BaseModel import BaseModel
 from sqlalchemy import Column, Integer, String, ForeignKey, Enum
 from datetime import datetime
 
@@ -135,3 +135,12 @@ class QuizResult(BaseModel):
     quiz = relationship("Quiz", back_populates="quiz_result")
 
 
+class Notification(BaseModel):
+    __tablename__ = "notifications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    timestamp = Column(DateTime, default=func.utcnow())
+    text = Column(String, nullable=False)
+    status = Column(Enum("UNREAD", "READ", name="status_of_notification"), nullable=False)
+    quiz_id = Column(Integer, ForeignKey('quizzes.id'))
+    quiz = relationship("Quiz", back_populates="notifications")

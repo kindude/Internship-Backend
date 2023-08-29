@@ -4,8 +4,9 @@ from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete, and_
 
-from models.Models import Quiz, Question, Option, QuizResult, User
+from models.Models import Quiz, Question, Option, QuizResult, User, Notification
 from repositories.action_repository import logger
+from repositories.notification_repository import NotificationRepository
 from repositories.quiz_result_repository import QuizResultRepository
 from repositories.redis_repository import RedisRepository
 from schemas.Option import OptionResponse, OptionAddRequest, OptionUpdateScheme
@@ -51,6 +52,10 @@ class QuizzRepository:
                 ]
                 self.async_session.add_all(options)
                 await self.async_session.commit()
+
+            notif_repo = NotificationRepository(session=self.async_session)
+
+            await notif_repo.create_notification(quizToAdd.company_id)
 
             return self.quiz_to_response(quizToAdd)
 

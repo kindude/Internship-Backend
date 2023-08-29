@@ -14,7 +14,6 @@ from utils.auth import get_current_user
 
 router_export = APIRouter()
 
-
 @router_export.get("/export/user-results/{company_id}/{user_id}", tags=["ExportData"])
 async def export_user_results(
         company_id:int,
@@ -62,6 +61,7 @@ async def export_company_results(
             redis_repository = RedisRepository()
             export_repository = ExportRepository()
             company_results = await redis_repository.get_company_results(company_id=company_id)
+
 
             if not company_results:
                 raise HTTPException(status_code=404, detail="No results found")
