@@ -4,7 +4,9 @@ from fastapi import APIRouter, Depends, Query
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+
 from repositories.notification_repository import NotificationRepository
+
 from repositories.quiz_result_repository import QuizResultRepository
 from repositories.user_repository import UserRepository
 
@@ -106,7 +108,9 @@ async def user_login(request: UserLogin, db: AsyncSession = Depends(get_db)) -> 
 @router_user.get("/users/rating", tags=["User"])
 async def get_user_rating(db:AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)):
     quiz_result_repository = QuizResultRepository(database=db)
-    rating = await quiz_result_repository.calculate_user_averages(current_user.id)
+
+    rating = await quiz_result_repository.calculate_user_averages(user_id=current_user.id)
+
     return rating["average_system_rating"]
 
 
@@ -131,6 +135,8 @@ async def get_user_notifications(db:AsyncSession = Depends(get_db), current_user
 
 
 
-
-
-
+@router_user.get("/quizzes/last-completions", tags=["User"])
+async def get_last_quiz_completions(db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)):
+    quiz_result_repository = QuizResultRepository(database=db)
+    last_completions = await quiz_result_repository.get_last_quiz_completion(user_id=current_user.id)
+    return last_completions
