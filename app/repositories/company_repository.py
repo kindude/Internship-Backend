@@ -127,7 +127,8 @@ class CompanyRepository:
 
     async def update_company(self, id: int, request: CompanyScheme) -> CompanyResponse:
         try:
-            company = await self.async_session.get(Company, id)
+            query = select(Company).filter(Company.id == id)
+            company = await self.async_session.execute(query)
             company = company.scalar_one_or_none()
             if company is not None:
                 company.name = request.name
@@ -139,13 +140,14 @@ class CompanyRepository:
                 company.is_visible = request.is_visible
                 await self.async_session.commit()
                 logger.info(f"Company updated: ID {id}")
-                return company
+                return self.company_to_response(company=company)
         except Exception as e:
             print(f"An error occurred while updating company: {e}")
 
     async def change_visibility(self, id: int, request: str) -> CompanyResponse:
         try:
-            company = await self.async_session.get(Company, id)
+            query = select(Company).filter(Company.id == id)
+            company = await self.async_session.execute(query)
             company = company.scalar_one_or_none()
             if company is not None:
                 company.is_visible = request

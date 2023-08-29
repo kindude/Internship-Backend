@@ -273,20 +273,23 @@ class QuizzRepository:
             quiz_result_rep = QuizResultRepository(database=self.async_session)
 
             user_averages = await quiz_result_rep.calculate_user_averages(user_id, company_id)
-
-            quiz_data = {
-                "user_id": user_id,
-                "company_id": company_id,
-                "quiz_id": quiz_id,
-                "correct_answers": correct_answers,
-                "total_questions": total_questions,
-                "time": datetime.utcnow().isoformat()
-            }
-
             try:
                 async with RedisRepository() as redis_rep:
-                    await redis_rep.save_quiz(quiz_data)
-                    print("Quiz data saved to Redis")
+                    for question in questions:
+                        is_correct = False
+                        if question.option.text in correct_options_text:
+                            is_correct = True
+                        quiz_data = {
+                            "user_id": user_id,
+                            "company_id": company_id,
+                            "quiz_id": quiz_id,
+                            "question": question.text,
+                            "option": question.option.text,
+                            "is_correct": str(is_correct),
+                            "time": datetime.utcnow().isoformat()
+                        }
+                        await redis_rep.save_quiz(quiz_data)
+                        print("Quiz data saved to Redis")
             except Exception as e:
                 print(f"An error occurred while using RedisRepository: {e}")
 
