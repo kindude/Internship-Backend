@@ -1,7 +1,9 @@
 import aioredis
 import redis
 
+
 from ENV import REDIS_HOST, REDIS_PORT
+
 
 from db.connect import connect_Postgres
 

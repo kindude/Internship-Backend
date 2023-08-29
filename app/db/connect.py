@@ -17,3 +17,4 @@ async def connect_Postgres():
     engine = create_async_engine(database_url, future=True, echo=True)
     async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
     return async_session()
+
