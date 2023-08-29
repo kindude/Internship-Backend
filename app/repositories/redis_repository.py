@@ -13,9 +13,6 @@ class RedisRepository:
 
         self.redis_client = await get_redis()
 
-
-
-
     async def disconnect(self):
         if self.redis_client:
             self.redis_client.close()

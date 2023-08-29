@@ -60,7 +60,8 @@ async def export_company_results(
         if company.owner_id == current_user.id or current_user.id in admin_ids:
             redis_repository = RedisRepository()
             export_repository = ExportRepository()
-            company_results = await redis_repository.get_company_results(company_id)
+            company_results = await redis_repository.get_company_results(company_id=company_id)
+
 
             if not company_results:
                 raise HTTPException(status_code=404, detail="No results found")
