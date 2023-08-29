@@ -14,6 +14,7 @@ from utils.auth import get_current_user
 
 router_export = APIRouter()
 
+
 @router_export.get("/export/user-results/{company_id}/{user_id}", tags=["ExportData"])
 async def export_user_results(
         company_id:int,
