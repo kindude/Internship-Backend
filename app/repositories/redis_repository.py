@@ -10,11 +10,7 @@ class RedisRepository:
         self.redis_client = None
 
     async def connect(self):
-
         self.redis_client = await get_redis()
-
-
-
 
     async def disconnect(self):
         if self.redis_client:

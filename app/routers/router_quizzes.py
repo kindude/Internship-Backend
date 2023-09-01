@@ -205,7 +205,8 @@ async def get_user_quiz_averages(company_id:int, user_id: int, db: AsyncSession 
         admin_ids = [admin.id for admin in admins.users]
         if company.owner_id == current_user.id or current_user.id in admin_ids:
             quiz_result_repository = QuizResultRepository(database=db)
-            user_averages = await quiz_result_repository.get_user_quiz_averages(user_id)
+
+            user_averages = await quiz_result_repository.get_user_quiz_averages(user_id=user_id)
             return user_averages
 
 @router_quiz.get("company/{company_id}/users/last-completions", tags=["Company"])
