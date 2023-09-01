@@ -8,6 +8,7 @@ from db.get_db import get_db
 
 from repositories.action_repository import ActionRepository
 from repositories.company_repository import CompanyRepository
+from repositories.notification_repository import NotificationRepository
 from repositories.quiz_result_repository import QuizResultRepository
 from repositories.quizzes_repository import QuizzRepository
 from schemas.Option import OptionUpdateScheme, OptionResponse
@@ -24,7 +25,7 @@ router_quiz = APIRouter()
 
 
 @router_quiz.post("/company/create/quiz", response_model=QuizResponse, tags=["Quizzes"])
-async def create_quiz(quiz: QuizAddRequest, db:AsyncSession = Depends(get_db), current_user:UserResponse = Depends(get_current_user)):
+async def create_quiz(quiz: QuizAddRequest, db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)):
     company_repository = CompanyRepository(database=db)
     company = await company_repository.get_company(id=quiz.company_id)
     action_repository = ActionRepository(database=db)
@@ -32,9 +33,11 @@ async def create_quiz(quiz: QuizAddRequest, db:AsyncSession = Depends(get_db), c
     if admins:
         admin_ids = [admin.id for admin in admins.users]
         quiz_repository = QuizzRepository(database=db)
+        notif_repo = NotificationRepository(session=db)
         if company.owner_id == current_user.id or current_user.id in admin_ids:
             added_quiz = await quiz_repository.create_quizz(quiz)
             if added_quiz:
+                await notif_repo.create_notification(company_id=company.id, quiz_id=added_quiz.id)
                 return added_quiz
         else:
             raise HTTPException(status_code=403, detail="You are not allowed to create quizzes")
@@ -43,12 +46,12 @@ async def create_quiz(quiz: QuizAddRequest, db:AsyncSession = Depends(get_db), c
 @router_quiz.get("/company/{company_id}/get-quiz/{quiz_id}", response_model=QuizResponse, tags=["Quizzes"])
 async def get_quiz(company_id:int, quiz_id:int ,  db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)):
     action_repository = ActionRepository(database=db)
-    member = await action_repository.if_member(user_id=current_user.id, company_id=company_id)
-    if member:
+    try:
         quiz_repository = QuizzRepository(database=db)
         retrieved_quiz = await quiz_repository.get_quiz(id=quiz_id)
         return retrieved_quiz
-    raise HTTPException(status_code=403, detail="You are not a member of the company")
+    except HTTPException:
+        raise HTTPException(status_code=403, detail="You are not a member of the company")
 
 
 @router_quiz.get("/company/{company_id}/get-quizzes/", response_model=QuizListResponse, tags=["Quizzes"])

@@ -1,13 +1,13 @@
 from typing import List
 
+from fastapi import Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-
+from datetime import datetime
+from db.get_db import get_db
 from models.Models import Notification, Quiz
 from repositories.action_repository import ActionRepository
-from repositories.company_repository import CompanyRepository
-from schemas.Notification import NotificationResponse
 from schemas.Quiz import DeleteScheme
 
 
@@ -16,14 +16,16 @@ class NotificationRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create_notification(self, company_id: int) -> Notification:
+
+    async def create_notification(self, company_id: int, quiz_id:int) -> Notification:
         notification = Notification(
             status="UNREAD",
-            text=f"New quiz for company {company_id} has been created"
+            text=f"New quiz for company {company_id} has been created",
+            quiz_id=quiz_id,
+            timestamp=datetime.utcnow()
         )
 
         self.session.add(notification)
-        await self.session.refresh(notification)
         await self.session.commit()
         return notification
 

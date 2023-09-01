@@ -28,6 +28,20 @@ class ActionRepository:
     def __init__(self, database: AsyncSession):
         self.async_session = database
 
+
+    async def add_member(self, user_id:int, company_id:int):
+        try:
+            member = Action(
+                status="ACCEPTED",
+                user_id=user_id,
+                company_id=company_id,
+                type_of_action="MEMBER"
+            )
+            self.async_session.add(member)
+            await self.async_session.commit()
+        except Exception as e:
+            print(f"An error occurred while creating the invite: {e}")
+            raise e
     async def create_invite(self, request_: ActionResponse) -> Action:
         invite = Action(**request_.dict())
         try:
@@ -293,7 +307,8 @@ class ActionRepository:
 
     async def add_admin(self, user_id:int, company_id:int) -> UserResponseNoPass:
         try:
-            user = await self.async_session.get(User, user_id)
+            query = select(User).filter(User.id == user_id)
+            user = await self.async_session.execute(query)
             user = user.scalar_one_or_none()
             if await self.if_member(user_id, company_id):
                 if user:
@@ -310,7 +325,8 @@ class ActionRepository:
 
     async def remove_admin(self, id: int) -> UserResponseNoPass:
         try:
-            user = await self.async_session.get(User, id)
+            query = select(User).filter(User.id == id)
+            user = await self.async_session.execute(query)
             user = user.scalar_one_or_none()
             if user:
                 if "ADMIN" in user.roles:

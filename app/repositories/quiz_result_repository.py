@@ -70,7 +70,6 @@ class QuizResultRepository:
         except Exception as e:
             print(f"An error occurred while fetching last quiz completions: {e}")
 
-
     async def get_all_users_averages(self):
         try:
             average_query = select(
@@ -86,7 +85,6 @@ class QuizResultRepository:
 
     async def get_user_quiz_averages(self, user_id:int):
         try:
-            # Получаем средние баллы по квизам для выбранного пользователя
             average_query = select(
                 QuizResult.quiz_id,
                 func.avg(QuizResult.correct_answers).label("average_score")
@@ -100,7 +98,6 @@ class QuizResultRepository:
 
     async def get_company_users_last_completion(self, company_id:int):
         try:
-            # Получаем список пользователей компании и время последнего прохождения
             last_completion_query = select(
                 QuizResult.user_id,
                 func.max(QuizResult.timestamp).label("last_completion_time")

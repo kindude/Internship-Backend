@@ -2,7 +2,7 @@ from typing import List
 
 from pydantic import BaseModel
 
-from schemas.Question import QuestionAddRequest, QuestionResponse
+from schemas.Question import QuestionAddRequest, QuestionResponse, QuestionUpdateScheme
 
 
 class QuizAddRequest(BaseModel):
@@ -30,6 +30,7 @@ class QuizUpdateScheme(BaseModel):
     title: str
     description: str
     frequency: int
+    questions: List[QuestionUpdateScheme]
 
 
 class DeleteScheme(BaseModel):

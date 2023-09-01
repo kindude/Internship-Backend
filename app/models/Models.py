@@ -6,7 +6,6 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from models.BaseModel import BaseModel
 from sqlalchemy import Column, Integer, String, ForeignKey, Enum
-from datetime import datetime
 
 
 class User(BaseModel):
@@ -55,6 +54,8 @@ class Company(BaseModel):
     requests = relationship("Action", back_populates="company", cascade="all, delete-orphan")
     quizzes: Mapped[List["Quiz"]] = relationship(cascade="all, delete-orphan")
     quiz_results = relationship("QuizResult", back_populates="company")
+    actions: Mapped[List["Action"]] = relationship(cascade="all, delete-orphan")
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -73,9 +74,9 @@ class Action(BaseModel):
     status = Column(Enum("PENDING", "REJECTED", "ACCEPTED", "CANCELLED", name="action_status"), nullable=False, default="pending")
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     user = relationship("User", back_populates="invites")
-    company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
-    company = relationship("Company", back_populates="requests")
     type_of_action = Column(Enum("REQUEST", "INVITE", "MEMBER", name="type_of_action"), nullable=False)
+    company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"))
+    company = relationship("Company", back_populates="actions", cascade="all, delete")
 
     def to_dict(self):
         return {
@@ -97,8 +98,8 @@ class Quiz(BaseModel):
     frequency = Column(Integer, nullable=False)
     company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"))
     question: Mapped[List["Question"]] = relationship(cascade="all, delete-orphan")
-    quiz_result = relationship("QuizResult", uselist=False, back_populates="quiz")
-
+    quiz_result: Mapped[List["QuizResult"]] = relationship(cascade="all, delete-orphan")
+    notifications = relationship("Notification", back_populates="quiz")
 
 class Question(BaseModel):
     __tablename__ = "questions"
@@ -126,20 +127,19 @@ class QuizResult(BaseModel):
     id = Column(Integer, primary_key=True, index=True)
     company_id = Column(Integer, ForeignKey('companies.id'))
     user_id = Column(Integer, ForeignKey('users.id'))
-    quiz_id = Column(Integer, ForeignKey('quizzes.id'))
     correct_answers = Column(Integer, nullable=False, default=0)
     questions = Column(Integer, nullable=False, default=0)
     timestamp = Column(DateTime, default=func.utcnow())
     company = relationship("Company", back_populates="quiz_results")
     user = relationship("User", back_populates="quiz_results")
-    quiz = relationship("Quiz", back_populates="quiz_result")
+    quiz_id:Mapped[int] = mapped_column(ForeignKey("quizzes.id"))
 
 
 class Notification(BaseModel):
     __tablename__ = "notifications"
 
     id = Column(Integer, primary_key=True, index=True)
-    timestamp = Column(DateTime, default=func.utcnow())
+    timestamp = Column(DateTime(timezone=True), server_default=func.timezone("UTC", func.now()), nullable=True)
     text = Column(String, nullable=False)
     status = Column(Enum("UNREAD", "READ", name="status_of_notification"), nullable=False)
     quiz_id = Column(Integer, ForeignKey('quizzes.id'))

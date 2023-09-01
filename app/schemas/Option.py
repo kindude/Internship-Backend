@@ -16,6 +16,7 @@ class OptionResponse(BaseModel):
 class OptionUpdateScheme(BaseModel):
     id: int
     text: str
+    question_id:int
     is_correct: bool
 
 class OptionListResponse(BaseModel):
