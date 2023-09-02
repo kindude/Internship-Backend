@@ -268,7 +268,7 @@ class ActionRepository:
             print(f"An error occurred while getting invites: {e}")
             raise e
 
-    async def get_users_in_company(self, company_id: int, per_page: int, page: int) -> UsersListResponse:
+    async def get_users_in_company(self, company_id: int, per_page: int = 5, page: int = 1) -> UsersListResponse:
         try:
             stmt = select(func.count(User.id)).join(Action).filter(
                 (Action.type_of_action == "MEMBER") & (Action.user_id == User.id) & (Action.company_id == company_id)
