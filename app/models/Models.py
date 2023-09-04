@@ -22,6 +22,7 @@ class User(BaseModel):
     companies = relationship("Company", back_populates="owner")
     invites = relationship("Action", back_populates="user", cascade="all, delete-orphan")
     quiz_results = relationship("QuizResult", back_populates="user")
+    notifications = relationship("Notification", back_populates="user")
     def to_dict(self):
 
         return {
@@ -51,7 +52,6 @@ class Company(BaseModel):
     is_visible = Column(Boolean, default=True)
     owner_id = Column(Integer, ForeignKey('users.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
     owner = relationship('User', back_populates='companies')
-    requests = relationship("Action", back_populates="company", cascade="all, delete-orphan")
     quizzes: Mapped[List["Quiz"]] = relationship(cascade="all, delete-orphan")
     quiz_results = relationship("QuizResult", back_populates="company")
     actions: Mapped[List["Action"]] = relationship(cascade="all, delete-orphan")
@@ -75,8 +75,7 @@ class Action(BaseModel):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     user = relationship("User", back_populates="invites")
     type_of_action = Column(Enum("REQUEST", "INVITE", "MEMBER", name="type_of_action"), nullable=False)
-    company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"))
-    company = relationship("Company", back_populates="actions", cascade="all, delete")
+    company_id: Mapped[int] = mapped_column(ForeignKey("companies.id", ondelete="CASCADE"))
 
     def to_dict(self):
         return {
@@ -96,17 +95,17 @@ class Quiz(BaseModel):
     title = Column(String, index=True, nullable=False)
     description = Column(String, nullable=False)
     frequency = Column(Integer, nullable=False)
-    company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"))
+    company_id: Mapped[int] = mapped_column(ForeignKey("companies.id", ondelete="CASCADE"))
     question: Mapped[List["Question"]] = relationship(cascade="all, delete-orphan")
     quiz_result: Mapped[List["QuizResult"]] = relationship(cascade="all, delete-orphan")
-    notifications = relationship("Notification", back_populates="quiz")
+
 
 class Question(BaseModel):
     __tablename__ = "questions"
 
     id = Column(Integer, primary_key=True, index=True)
     text = Column(String, nullable=False)
-    quiz_id: Mapped[int] = mapped_column(ForeignKey("quizzes.id"))
+    quiz_id: Mapped[int] = mapped_column(ForeignKey("quizzes.id", ondelete="CASCADE"))
 
     option: Mapped[List["Option"]] = relationship(cascade="all, delete-orphan")
 
@@ -116,7 +115,7 @@ class Option(BaseModel):
 
     id = Column(Integer, primary_key=True, index=True)
     text = Column(String, nullable=False)
-    question_id: Mapped[int] = mapped_column(ForeignKey("questions.id"))
+    question_id: Mapped[int] = mapped_column(ForeignKey("questions.id", ondelete="CASCADE"))
     is_correct = Column(Boolean, default=False)
 
 
@@ -125,7 +124,7 @@ class QuizResult(BaseModel):
 
 
     id = Column(Integer, primary_key=True, index=True)
-    company_id = Column(Integer, ForeignKey('companies.id'))
+    company_id = Column(Integer, ForeignKey('companies.id', ondelete="CASCADE"))
     user_id = Column(Integer, ForeignKey('users.id'))
     correct_answers = Column(Integer, nullable=False, default=0)
     questions = Column(Integer, nullable=False, default=0)
@@ -142,5 +141,5 @@ class Notification(BaseModel):
     timestamp = Column(DateTime(timezone=True), server_default=func.timezone("UTC", func.now()), nullable=True)
     text = Column(String, nullable=False)
     status = Column(Enum("UNREAD", "READ", name="status_of_notification"), nullable=False)
-    quiz_id = Column(Integer, ForeignKey('quizzes.id'))
-    quiz = relationship("Quiz", back_populates="notifications")
+    user_id = Column(Integer, ForeignKey('users.id'))
+    user = relationship("User", back_populates="notifications")
