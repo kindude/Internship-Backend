@@ -4,7 +4,7 @@ from sqlalchemy import Column, Integer, String, Boolean, ARRAY, ForeignKey, Date
 
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
-from app.models.BaseModel import BaseModel
+from models.BaseModel import BaseModel
 from sqlalchemy import Column, Integer, String, ForeignKey, Enum
 from datetime import datetime
 

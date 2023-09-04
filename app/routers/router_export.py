@@ -15,31 +15,31 @@ from utils.auth import get_current_user
 router_export = APIRouter()
 
 
-@router_export.get("/export/user-results/{company_id}/{user_id}", tags=["ExportData"])
+@router_export.get("/export/user-results/{user_id}/{format}", tags=["ExportData"])
 async def export_user_results(
-        company_id:int,
         user_id: int,
         format: str,
         current_user: UserResponse = Depends(get_current_user),
 ):
 
-    if user_id == current_user.id:
-        if format not in ["json", "csv"]:
-            raise HTTPException(status_code=400, detail="Invalid format")
-        redis_repository = RedisRepository()
-        export_repository = ExportRepository()
-        user_results = await redis_repository.get_user_results_from_database(company_id=company_id, user_id=user_id)
-        if not user_results:
-            raise HTTPException(status_code=404, detail="User results not found")
+        if user_id == current_user.id:
+            if format not in ["json", "csv"]:
+                raise HTTPException(status_code=400, detail="Invalid format")
+            redis_repository = RedisRepository()
+            export_repository = ExportRepository()
+            user_results = await redis_repository.get_user_results_from_database(user_id=user_id)
+            if not user_results:
+                raise HTTPException(status_code=404, detail="User results not found")
 
-        if format == "json":
-            with open("user_result.json", "w") as json_file:
-                json.dump(user_results, json_file)
-            return JSONResponse(content=user_results)
+            if format == "json":
+                with open("user_result.json", "w") as json_file:
+                    json.dump(user_results, json_file)
+                return FileResponse("user_result.json", headers={"Content-Disposition": f"attachment; filename={'user_result.json'}"})
 
-        elif format == "csv":
-            return export_repository.generate_csv_response(user_results, "user_results.csv")
-    raise HTTPException(status_code=403, detail="You are not allowed to export quizzes of this user")
+            elif format == "csv":
+                export_repository.generate_csv_response(user_results, "user_results.csv")
+                return FileResponse("user_results.csv", headers={"Content-Disposition": f"attachment; filename={'user_results.csv'}"})
+        raise HTTPException(status_code=403, detail="You are not allowed to export quizzes of this user")
 
 
 @router_export.get("/export/company-results/{company_id}", tags=["ExportData"])
