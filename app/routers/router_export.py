@@ -1,4 +1,5 @@
 import json
+import os
 
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse, FileResponse
@@ -14,9 +15,9 @@ from utils.auth import get_current_user
 
 router_export = APIRouter()
 
-@router_export.get("/export/user-results/{company_id}/{user_id}", tags=["ExportData"])
+
+@router_export.get("/export/user-results/{user_id}/{format}", tags=["ExportData"])
 async def export_user_results(
-        company_id:int,
         user_id: int,
         format: str,
         current_user: UserResponse = Depends(get_current_user),
@@ -27,21 +28,23 @@ async def export_user_results(
             raise HTTPException(status_code=400, detail="Invalid format")
         redis_repository = RedisRepository()
         export_repository = ExportRepository()
-        user_results = await redis_repository.get_user_results_from_database(company_id=company_id, user_id=user_id)
+        user_results = await redis_repository.get_user_results_from_database(user_id=user_id)
         if not user_results:
             raise HTTPException(status_code=404, detail="User results not found")
 
         if format == "json":
             with open("user_result.json", "w") as json_file:
                 json.dump(user_results, json_file)
+                os.remove("user_result.json")
             return JSONResponse(content=user_results)
 
         elif format == "csv":
-            return export_repository.generate_csv_response(user_results, "user_results.csv")
+            content = user_results
+            return content
     raise HTTPException(status_code=403, detail="You are not allowed to export quizzes of this user")
 
 
-@router_export.get("/export/company-results/{company_id}", tags=["ExportData"])
+@router_export.get("/export/company-results/{company_id}/{format}", tags=["ExportData"])
 async def export_company_results(
         company_id: int,
         format: str = "json",
@@ -62,14 +65,14 @@ async def export_company_results(
             export_repository = ExportRepository()
             company_results = await redis_repository.get_company_results(company_id=company_id)
 
-
             if not company_results:
                 raise HTTPException(status_code=404, detail="No results found")
 
             if format == "json":
                 with open("company_result.json", "w") as json_file:
                     json.dump(company_results, json_file)
+                    os.remove("company_result.json")
                 return JSONResponse(content=company_results)
             elif format == "csv":
-                return export_repository.generate_csv_response(company_results, "company_results.csv")
+                return company_results
     raise HTTPException(status_code=403, detail="You are not allowed to check all company quizzes")
