@@ -53,10 +53,8 @@ class QuizzRepository:
                 self.async_session.add_all(options)
                 await self.async_session.commit()
 
-
             await self.async_session.commit()
 
-            print(self.quiz_to_response(quizToAdd))
             return self.quiz_to_response(quizToAdd)
 
         except Exception as e:
