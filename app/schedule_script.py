@@ -1,5 +1,5 @@
 import asyncio
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -7,6 +7,10 @@ from sqlalchemy.orm import sessionmaker, aliased
 from contextlib import asynccontextmanager
 from ENV import DB_URL_CONNECT, DB_URL_CONNECT_SCRIPT
 from models.Models import Quiz, User, QuizResult, Notification
+from sqlalchemy import cast, DateTime
+
+from repositories.quiz_result_repository import QuizResultRepository
+
 
 @asynccontextmanager
 async def connect_to_postgres():
@@ -22,39 +26,39 @@ async def send_notifications():
     current_time = datetime.utcnow()
 
     async with connect_to_postgres() as session:
-        # Выбираем все квизы из таблицы Quiz
         query = select(Quiz)
         quizzes = await session.execute(query)
         quizzes = quizzes.scalars().all()
 
         for quiz in quizzes:
-            # Определяем алиасы для таблиц
-            user_alias = aliased(User)
-            quiz_result_alias = aliased(QuizResult)
 
-            # Создаем запрос с использованием SQLAlchemy для JOIN
             query = (
                 select(User)
-                .join(quiz_result_alias, User.id == quiz_result_alias.user_id)
-                .filter(
-                    quiz_result_alias.quiz_id == quiz.id,
-                    quiz_result_alias.timestamp >= (current_time - timedelta(days=quiz.frequency))
-                )
+                .join(QuizResult, and_(
+                    User.id == QuizResult.user_id,
+                    QuizResult.quiz_id == quiz.id,
+                    cast(QuizResult.timestamp, DateTime) <= (current_time - timedelta(days=quiz.frequency))
+                ))
             )
 
-            # Выполняем запрос и получаем результат
             users_passed_quiz = await session.execute(query)
             users_passed_quiz = users_passed_quiz.scalars().all()
 
             for user in users_passed_quiz:
-                last_completion = user.get_last_quiz_completion(quiz.id)
-                if not last_completion or last_completion.timestamp < (current_time - timedelta(days=quiz.frequency)):
-                    notification = Notification(
-                        text=f"Вы не проходили квиз '{quiz.title}' в течение {quiz.frequency} дней!",
-                        status="UNREAD",
-                        quiz_id=quiz.id,
-                    )
-                    session.add(notification)
+                quiz_result_repo = QuizResultRepository(database=session)
+                last_completions = await quiz_result_repo.get_last_quiz_completion(user.id)
+                for last_completion in last_completions:
+                    last_completion_time = last_completion
+                    print(last_completion_time)
+                    if not last_completion_time or last_completion_time < (
+                            current_time - timedelta(days=quiz.frequency)):
+                        notification = Notification(
+                            text=f"Вы не проходили квиз '{quiz.title}' в течение {quiz.frequency} дней!",
+                            status="UNREAD",
+                            user_id=user.id,
+                        )
+                        session.add(notification)
+                        await session.commit()
 
 if __name__ == '__main__':
     scheduler = AsyncIOScheduler()

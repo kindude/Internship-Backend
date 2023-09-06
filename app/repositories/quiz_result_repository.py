@@ -59,12 +59,12 @@ class QuizResultRepository:
     async def get_last_quiz_completion(self, user_id: int):
         try:
             last_completion_query = select(
-                QuizResult.quiz_id,
-                func.max(QuizResult.timestamp).label("last_completion_time")
-            ).where(QuizResult.user_id == user_id).group_by(QuizResult.quiz_id)
+                QuizResult.timestamp
+            ).where(QuizResult.user_id == user_id)
 
             last_completions = await self.async_session.execute(last_completion_query)
-            return [dict(row) for row in last_completions]
+            last_completions = last_completions.scalars().all()
+            return last_completions
 
         except Exception as e:
             print(f"An error occurred while fetching last quiz completions: {e}")
