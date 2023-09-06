@@ -59,7 +59,7 @@ async def send_notifications():
 if __name__ == '__main__':
     scheduler = AsyncIOScheduler()
 
-    scheduler.add_job(send_notifications, 'interval', seconds=3)
+    scheduler.add_job(send_notifications, 'interval', hours=24)
 
     scheduler.start()
 
