@@ -37,3 +37,10 @@ class DeleteScheme(BaseModel):
     message: str
     id: int
 
+
+class LastQuizCompletion(BaseModel):
+    quiz_id: int
+    last_completion_time: str
+
+class ListLastQuizCompletion(BaseModel):
+    completions: List[LastQuizCompletion]
