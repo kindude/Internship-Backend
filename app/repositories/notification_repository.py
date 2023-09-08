@@ -44,7 +44,7 @@ class NotificationRepository:
     async def get_notifications(self, user_id: int) -> List[Notification]:
         action_repo = ActionRepository(database=self.session)
         query = (
-            select(Notification).filter(and_(Notification.user_id == user_id),Notification.status == "UNREAD")
+            select(Notification).filter(and_(Notification.user_id == user_id, Notification.status == "UNREAD"))
         )
         notifications = await self.session.execute(query)
         notifications = notifications.scalars().all()

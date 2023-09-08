@@ -133,9 +133,3 @@ async def get_user_notifications(db:AsyncSession = Depends(get_db), current_user
     notifications = await notif_repo.get_notifications(user_id=current_user.id)
     return notifications
 
-
-@router_user.get("/quizzes/last-completions", tags=["User"])
-async def get_last_quiz_completions(db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)):
-    quiz_result_repository = QuizResultRepository(database=db)
-    last_completions = await quiz_result_repository.get_last_quiz_completion(user_id=current_user.id)
-    return last_completions
