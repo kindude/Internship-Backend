@@ -10,6 +10,26 @@ jobs:
   deploy:
     name: Deploy to EC2 on master branch push
     runs-on: ubuntu-latest
+    env:
+      PORT: 8000
+      POSTGRES_USER: kindude
+      HOST: '0.0.0.0'
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: pg
+      POSTGRES_PORTS: 5432
+      REDIS_PORTS: 6379
+      REDIS_HOST: redis
+      APP_PORTS: 8000
+      DB_PATH: postgresql://kindude:1234@localhost:5432/pg
+      DB_POSTGRES_DB_NAME: internship-postgres-1
+      ALGORITHM: HS256
+      PYTHONPATH: app
+      RELOAD: True
+      API_AUDIENC: https://auth-reg
+      AUTH0_SECRET_KEY: EinFdLqBbujAVpVnrMbiGiMQrlyeedTVkjn5IewxyZLCHUIzRU7ZyNyW27lhR7eL
+      AUTH0_DOMAIN: dev-nusd43iygpsjwqlj.us.auth0.com
+      ALGORITHM_AUTH0: "HS256"
+      SALT: 5z
 
     steps:
       - name: Checkout the files
