@@ -53,10 +53,8 @@ class QuizzRepository:
                 self.async_session.add_all(options)
                 await self.async_session.commit()
 
-
             await self.async_session.commit()
 
-            print(self.quiz_to_response(quizToAdd))
             return self.quiz_to_response(quizToAdd)
 
         except Exception as e:
@@ -179,28 +177,32 @@ class QuizzRepository:
                 quiz_to_update.description = quiz.description
                 quiz_to_update.frequency = quiz.frequency
 
-                # Select and update questions for the quiz
-                for updated_question in quiz.questions:
-                    question_to_update = await self.async_session.execute(
-                        select(Question).filter(Question.id == updated_question.id))
-                    question_to_update = question_to_update.scalar_one_or_none()
-                    if question_to_update:
-                        question_to_update.text = updated_question.text
-
-                        # Select and update options for the question
-                        for updated_option in updated_question.options:
-                            option_to_update = await self.async_session.execute(
-                                select(Option).filter(Option.id == updated_option.id))
-                            option_to_update = option_to_update.scalar_one_or_none()
-                            if option_to_update:
-                                option_to_update.text = updated_option.text
-                                option_to_update.is_correct = updated_option.is_correct
-
+                await self.update_questions(quiz=quiz)
                 await self.async_session.commit()
                 return self.quiz_to_response(quiz_to_update)
 
         except Exception as e:
             print(f"Error: {e}")
+
+
+    async def update_questions(self, quiz):
+        for updated_question in quiz.questions:
+            question_to_update = await self.async_session.execute(
+                select(Question).filter(Question.id == updated_question.id))
+            question_to_update = question_to_update.scalar_one_or_none()
+            if question_to_update:
+                question_to_update.text = updated_question.text
+                await self.update_options(updated_question)
+
+    async def update_options(self, updated_question):
+        for updated_option in updated_question.options:
+            option_to_update = await self.async_session.execute(
+                select(Option).filter(Option.id == updated_option.id))
+            option_to_update = option_to_update.scalar_one_or_none()
+            if option_to_update:
+                option_to_update.text = updated_option.text
+                option_to_update.is_correct = updated_option.is_correct
+
 
     async def delete_quiz(self, quiz_id: int):
         try:

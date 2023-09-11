@@ -37,7 +37,7 @@ async def create_quiz(quiz: QuizAddRequest, db: AsyncSession = Depends(get_db), 
         if company.owner_id == current_user.id or current_user.id in admin_ids:
             added_quiz = await quiz_repository.create_quizz(quiz)
             if added_quiz:
-                await notif_repo.create_notification(company_id=company.id, quiz_id=added_quiz.id)
+                await notif_repo.create_notifications(company_id=company.id, quiz_id=added_quiz.id)
                 return added_quiz
         else:
             raise HTTPException(status_code=403, detail="You are not allowed to create quizzes")

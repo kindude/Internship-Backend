@@ -1,14 +1,17 @@
+from typing import List
+
 from fastapi import HTTPException
 
 from fastapi import APIRouter, Depends, Query
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-
+from models.Models import Notification
 from repositories.notification_repository import NotificationRepository
 
 from repositories.quiz_result_repository import QuizResultRepository
 from repositories.user_repository import UserRepository
+from schemas.Quiz import ListLastQuizCompletion
 
 from schemas.User import UserScheme, UserResponse, UsersListResponse, UserDeleteScheme, UserLogin, UserResponseNoPass
 from db.get_db import get_db
@@ -120,23 +123,16 @@ async def get_quiz_averages(db: AsyncSession = Depends(get_db)):
     averages = await quiz_result_repository.get_quiz_averages()
     return averages
 
-@router_user.get("/quizzes/last-completions", tags=["User"])
+@router_user.get("/quizzes/last-completions", tags=["User"], response_model=ListLastQuizCompletion)
 async def get_last_quiz_completions(db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)):
     quiz_result_repository = QuizResultRepository(database=db)
     last_completions = await quiz_result_repository.get_last_quiz_completion(current_user.id)
     return last_completions
 
 
-@router_user.get("/user/notifications", tags=["User"])
+@router_user.get("/user/notifications/get", tags=["User"])
 async def get_user_notifications(db:AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)):
     notif_repo = NotificationRepository(session=db)
     notifications = await notif_repo.get_notifications(user_id=current_user.id)
     return notifications
 
-
-
-@router_user.get("/quizzes/last-completions", tags=["User"])
-async def get_last_quiz_completions(db: AsyncSession = Depends(get_db), current_user: UserResponse = Depends(get_current_user)):
-    quiz_result_repository = QuizResultRepository(database=db)
-    last_completions = await quiz_result_repository.get_last_quiz_completion(user_id=current_user.id)
-    return last_completions
