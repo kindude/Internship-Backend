@@ -118,20 +118,20 @@ class QuizResultRepository:
                     "total_correct_answers": 0
                 }
 
-            total_questions = averages[quiz_id].get("total_questions", 0)
-            correct_questions = averages[quiz_id].get("total_correct_answers", 0)
+            total_questions = averages.get(quiz_id, {}).get("total_questions", 0)
+            correct_questions = averages.get(quiz_id, {}).get("total_correct_answers", 0)
 
             total_questions += quiz_average.questions
             correct_questions += quiz_average.correct_answers
 
             if total_questions > 0:
                 average = correct_questions / total_questions * 5
-                if averages[quiz_id]["average"]:
+                if averages.get(quiz_id, {}).get("average"):
                     averages[quiz_id]["average"] += f", {average}"
                 else:
                     averages[quiz_id]["average"] = str(average)
 
-            if averages[quiz_id]["timestamp"]:
+            if averages.get(quiz_id, {}).get("timestamp"):
                 averages[quiz_id]["timestamp"] += f", {quiz_average.timestamp.strftime('%d/%m')}"
             else:
                 averages[quiz_id]["timestamp"] = quiz_average.timestamp.strftime('%d/%m')
