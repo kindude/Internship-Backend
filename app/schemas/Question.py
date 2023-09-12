@@ -2,7 +2,7 @@ from typing import List
 
 from pydantic import BaseModel
 
-from schemas.Option import OptionAddRequest, OptionResponse
+from schemas.Option import OptionAddRequest, OptionResponse, OptionUpdateScheme
 
 
 class QuestionAddRequest(BaseModel):
@@ -12,6 +12,7 @@ class QuestionAddRequest(BaseModel):
 class QuestionUpdateScheme(BaseModel):
     id:int
     text:str
+    options: List[OptionUpdateScheme]
 
 
 class QuestionResponse(BaseModel):

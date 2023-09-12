@@ -79,3 +79,21 @@ class UserLogin(BaseModel):
 
 class Token(BaseModel):
     token: str
+
+
+class UsersAverage(BaseModel):
+    user_id: str
+    average: float
+    time: str
+
+
+class ListUsersAverages(BaseModel):
+    averages: List[UsersAverage]
+
+
+class MyAverages(BaseModel):
+    quiz_id: int
+    average: str
+    timestamp: str
+    total_questions: int
+    total_correct_answers: int

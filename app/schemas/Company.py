@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Union
 from pydantic import BaseModel, EmailStr
 
@@ -33,3 +34,10 @@ class CompanyListResponse(BaseModel):
 class CompanyDeleteScheme(BaseModel):
     message: str
     id: int
+
+class CompanyUserLastCompletion(BaseModel):
+    user_id: int
+    last_completion_time: datetime
+
+class ListCompanyUserLastCompletion(BaseModel):
+    last_completions: List[CompanyUserLastCompletion]

@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from repositories.action_repository import ActionRepository
 from repositories.company_repository import CompanyRepository
 
 from schemas.Company import CompanyResponse, CompanyScheme, CompanyDeleteScheme, CompanyListResponse, CompanySchemeRequest
@@ -29,6 +30,8 @@ async def create_company(request: CompanySchemeRequest, db: AsyncSession = Depen
     company = await company_repository.create_company(request_)
     if not company:
         raise HTTPException(status_code=404, detail="Something went wrong")
+    action_repository = ActionRepository(database=db)
+    await action_repository.add_member(user_id=current_user.id, company_id=company.id)
 
     return company
 
