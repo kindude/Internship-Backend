@@ -15,6 +15,7 @@ postgres_db = os.getenv("POSTGRES_DB")
 docker_db_name = os.getenv("DB_POSTGRES_DB_NAME")
 
 DB_URL_CONNECT = "postgresql+asyncpg://" + user + ":" + password + "@" + docker_db_name + ":" + postgres_ports + "/" + postgres_db
+DB_URL_CONNECT_SCRIPT = "postgresql+asyncpg://" + user + ":" + password + "@" + "localhost" + ":" + postgres_ports + "/" + postgres_db
 SECRET_KEY = "helloworld"
 auth0_token = os.getenv("TOKEN")
 ALGORITHM = os.getenv("ALGORITHM")

@@ -25,9 +25,9 @@ class RedisRepository:
         expiration_time_seconds = int(timedelta(hours=48).total_seconds())
         self.redis_client.expire(redis_key, expiration_time_seconds)
 
-    async def get_user_results_from_database(self, company_id, user_id):
+    async def get_user_results_from_database(self, user_id):
         await self.connect()
-        redis_key_pattern = f"quiz_result:{company_id}:{user_id}:*"
+        redis_key_pattern = f"quiz_result:*:{user_id}:*"
 
         matching_keys = self.redis_client.keys(redis_key_pattern)
 

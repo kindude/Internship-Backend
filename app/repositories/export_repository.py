@@ -1,6 +1,8 @@
 import csv
 
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import  FileResponse
+
+
 class ExportRepository:
 
     def generate_csv_response(self, user_results, filename):
