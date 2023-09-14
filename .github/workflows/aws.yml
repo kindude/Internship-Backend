@@ -21,10 +21,10 @@ jobs:
         DOCKER_HUB_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
     
     - name: Build Docker image
-      run: docker build -t your-docker-image-name:latest .
+      run: docker build -t my-app:latest .
     
     - name: Push Docker image to Docker Hub
-      run: docker push your-docker-image-name:latest
+      run: docker push my-app:latest
       
     - name: Configure AWS credentials
       run: aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }} && aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }} && aws configure set default.region us-east-1
