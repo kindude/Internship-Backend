@@ -1,0 +1,54 @@
+version: '3'
+
+services:
+  postgres:
+    image: postgres
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - ${POSTGRES_PORTS}:${POSTGRES_PORTS}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - my-network
+
+  redis:
+    image: redis
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - ${REDIS_PORTS}:${REDIS_PORTS}
+    volumes:
+      - redis_data:/data
+    networks:
+      - my-network
+
+  app:
+    build:
+      context: .
+      dockerfile: dockerfile
+    env_file:
+      - .env
+    ports:
+      - ${APP_PORTS}:${APP_PORTS}
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./app:/app
+    networks:
+      - my-network
+
+networks:
+  my-network:
+    external: false
+
+volumes:
+  postgres_data:
+  redis_data:
