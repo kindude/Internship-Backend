@@ -35,10 +35,29 @@ jobs:
       - name: Checkout the files
         uses: actions/checkout@v2
 
-      - name: Deploy to Server 1
+      - name: Set up Docker
+        uses: docker/setup-docker@v2
+        with:
+          docker-version: '20.10.7'
+
+      - name: Build Docker image
+        run: docker build -t your-image-name:latest .
+
+      - name: Push Docker image to AWS ECR
+        run: |
+          echo ${{ secrets.AWS_ACCESS_KEY_ID }} > aws_access_key_id
+          echo ${{ secrets.AWS_SECRET_ACCESS_KEY }} > aws_secret_access_key
+          aws configure set aws_access_key_id $(cat aws_access_key_id)
+          aws configure set aws_secret_access_key $(cat aws_secret_access_key)
+          aws ecr get-login-password --region your-region | docker login --username AWS --password-stdin your-account-id.dkr.ecr.your-region.amazonaws.com
+          docker tag your-image-name:latest your-account-id.dkr.ecr.your-region.amazonaws.com/your-image-name:latest
+          docker push your-account-id.dkr.ecr.your-region.amazonaws.com/your-image-name:latest
+
+      - name: SSH into EC2 and Deploy Docker container
         uses: easingthemes/ssh-deploy@main
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
-          REMOTE_HOST: ${{ secrets.HOST_DNS }}
-          REMOTE_USER: ${{ secrets.USERNAME }}
-          TARGET: ${{ secrets.TARGET_DIR }}
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+          remote-host: ${{ secrets.HOST_DNS }}
+          remote-user: ${{ secrets.USERNAME }}
+          source: docker-compose.yml
+          target: /path/on/ec2 
