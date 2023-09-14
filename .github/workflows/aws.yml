@@ -24,7 +24,7 @@ jobs:
       run: docker build -t my-app:latest .
     
     - name: Push Docker image to Docker Hub
-      run: docker pushk indude/fastapi-repo:tagname my-app:latest
+      run: docker push indude/fastapi-repo:tagname my-app:latest
       
     - name: Configure AWS credentials
       run: aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }} && aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }} && aws configure set default.region us-east-1
